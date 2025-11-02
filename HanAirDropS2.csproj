@@ -11,6 +11,6 @@
 	  <None Remove="HanAirDropCreateBox.cs~RF94c7e4.TMP" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="SwiftlyS2.CS2" Version="0.2.36-beta.5" />
+		<PackageReference Include="SwiftlyS2.CS2" Version="0.2.35-beta.15" />
 	</ItemGroup>
 </Project>
