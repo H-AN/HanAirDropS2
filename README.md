@@ -218,9 +218,9 @@ Must match your plugin's command system
 
 # 当玩家获得AK-47时 / When player gets AK-47:
 
-服务器执行 -> w_9lGNxrYEnUNQmyCi @玩家ID
+服务器执行 -> sw_9lGNxrYEnUNQmyCi @玩家ID
 
-Server executes -> w_9lGNxrYEnUNQmyCi @playerID
+Server executes -> sw_9lGNxrYEnUNQmyCi @playerID
 
 技术实现建议 / Technical Tips
 
