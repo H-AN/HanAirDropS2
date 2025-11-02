@@ -1,0 +1,25 @@
+{
+  "AirDrop": {
+    "AirDropEnble": true,
+    "AirDropMode": 0,
+    "AirDropPosMode": 1,
+    "DeathDropPercent": 0.1,
+    "AirDropTimer": 60,
+    "AirDropKillTimer": 20,
+    "AirDropName": "AirdropA,AirdropB,AirdropC",
+    "PlayerPickEachRound": 0,
+    "AirDropSpawnMode": 0,
+    "AirDropCount": 3,
+    "AirDropDynamicCount": 1,
+    "AirDropPlayerCount": 1,
+    "PrecacheSoundEvent": "soundevents/vo/announcer/game_sounds_cs2_classic.vsndevts,soundevents/vo/agents/game_sounds_balkan_epic.vsndevts,soundevents/game_sounds_ui.vsndevts",
+    "BlockPickUpSoundEvent": "Vote.Failed",
+    "AdminCommand": "sw_createbox",
+    "Openrandomspawn": 0,
+    "AdminCommandFlags": "admin.dex",
+    "AdminSelectBoxCommand": "sw_selectbox",
+    "AdminSelectBoxCommandFlags": "admin.dex",
+    "AdminSelectBoxCount": 10,
+    "AdminSelectBoxColdCown": 1
+  }
+}

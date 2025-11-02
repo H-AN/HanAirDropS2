@@ -1,0 +1,51 @@
+{
+  "AirDropBox": {
+    "BoxList": [
+      {
+        "Name": "AirdropA",
+        "ModelPath": "models/props/crates/csgo_drop_crate_breakout.vmdl",
+        "DropSound": "balkan_epic.round_won_nocasualities_06",
+        "Items": "AK-47",
+        "TeamOnly": 2,
+        "RoundPickLimit": 3,
+        "SpawnPickLimit": 2,
+        "Probability": 0.6,
+        "Enabled": true,
+        "Code": 1,
+        "Flags": "",
+        "OpenGlow": true,
+        "GlowColor": "255,0,0,255"
+      },
+      {
+        "Name": "AirdropB",
+        "ModelPath": "models/props/crates/csgo_drop_crate_bravo.vmdl",
+        "DropSound": "balkan_epic.round_won_nocasualities_07",
+        "Items": "M4A1",
+        "TeamOnly": 1,
+        "RoundPickLimit": 5,
+        "SpawnPickLimit": 8,
+        "Probability": 0.4,
+        "Enabled": true,
+        "Code": 2,
+        "Flags": "",
+        "OpenGlow": true,
+        "GlowColor": "0,0,255,255"
+      },
+      {
+        "Name": "AirdropC",
+        "ModelPath": "models/props/crates/csgo_drop_crate_chroma.vmdl",
+        "DropSound": "balkan_epic.round_won_quickly_01",
+        "Items": "Nevgev",
+        "TeamOnly": 0,
+        "RoundPickLimit": 5,
+        "SpawnPickLimit": 8,
+        "Probability": 0.4,
+        "Enabled": true,
+        "Code": 3,
+        "Flags": "admin.add",
+        "OpenGlow": true,
+        "GlowColor": "0,255,0,255"
+      }
+    ]
+  }
+}

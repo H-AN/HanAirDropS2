@@ -1,0 +1,30 @@
+{
+  "AirDropItem": {
+    "ItemList": [
+      {
+        "Name": "AK-47",
+        "Command": "sw_9lGNxrYEnUNQmyCi",
+        "PickSound": "Event.BombDefused_Legacy1",
+        "ItemProbability": 0.5,
+        "Enabled": true,
+        "Permissions": ""
+      },
+      {
+        "Name": "M4A1",
+        "Command": "sw_WTLFKthNbj4w4Rmi",
+        "PickSound": "Event.BombDefused_Legacy2",
+        "ItemProbability": 0.5,
+        "Enabled": true,
+        "Permissions": ""
+      },
+      {
+        "Name": "Nevgev",
+        "Command": "sw_I3M3NEJqvE7ifF4v",
+        "PickSound": "Event.BombDefused_Legacy3",
+        "ItemProbability": 0.5,
+        "Enabled": true,
+        "Permissions": "admin.dex"
+      }
+    ]
+  }
+}
