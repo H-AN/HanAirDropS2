@@ -17,9 +17,9 @@ public class HanAirDropConfig
     public string BlockPickUpSoundEvent { get; set; } = "vsnd_files_track_01"; //无法拾取播放音效 
     public string AdminCommand { get; set; } = "sw_createbox"; //自定义管理员召唤空投的命令 Custom admin command to summon an airdrop
     public int Openrandomspawn { get; set; } = 0; //打开deathmatch 生成点 用于随机生成
-    public string AdminCommandFlags { get; set; } = ""; //管理员召唤随机空投所需要的Flags
+    public string AdminCommandFlags { get; set; } = string.Empty; //管理员召唤随机空投所需要的Flags
     public string AdminSelectBoxCommand { get; set; } = "sw_selectbox"; //召唤自选空投箱命令
-    public string AdminSelectBoxCommandFlags { get; set; } = ""; //召唤自选空投箱的权限
+    public string AdminSelectBoxCommandFlags { get; set; } = string.Empty; //召唤自选空投箱的权限
     public int AdminSelectBoxCount { get; set; } = 10; //限制恶意生成数量过多炸服
     public float AdminSelectBoxColdCown { get; set; } = 1.0f;
 

@@ -11,18 +11,19 @@ using Microsoft.Extensions.Configuration;
 using SwiftlyS2.Shared.Commands;
 using SwiftlyS2.Shared.Players;
 using Microsoft.Extensions.Options;
+using SwiftlyS2.Shared.ProtobufDefinitions;
 using System;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using System.Numerics;
-using SwiftlyS2.Shared.Natives;
-using System.Collections.Generic;
-using SwiftlyS2.Shared.Sounds;
+using System.Net.Sockets;
+using static HanAirDropS2.HanAirDropBoxConfig;
+using static Dapper.SqlMapper;
+using System.Diagnostics.Tracing;
+
 
 namespace HanAirDropS2;
 
 [PluginMetadata(
     Id = "HanAirDropS2",
-    Version = "1.0.0",
+    Version = "2.0.0",
     Name = "空投支援 for Sw2/HanAirDropS2",
     Author = "H-AN",
     Description = "CS2空投支援 SW2版本 CS2 AirDrop for SW2."
@@ -31,23 +32,17 @@ namespace HanAirDropS2;
 public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
 {
     private ServiceProvider? ServiceProvider { get; set; }
-
     private HanAirDropCreateBox _airDropCreator = null!;
     private HanAirDropConfig _airDropCFG = null!;
     private HanAirDropBoxConfig _airBoxCFG = null!;
     private HanAirDropItemConfig _airItemCFG = null!;
-    private HanAirDropGlow _airDropGlow = null!;
+    //private HanAirDropGlow _airDropGlow = null!;
     private TeleportHelper _teleportHelper = null!;
-
     private CancellationTokenSource? MapStartDropTimer { get; set; } = null;
-
     private readonly Dictionary<ulong, DateTime> AdminCreateBoxCooldown = new();
-
-
     public string GetTranslatedText(string name, params object[] args) => Core.Localizer[name, args];
     public override void Load(bool hotReload)
     {
-        
         Core.Configuration.InitializeJsonWithModel<HanAirDropConfig>("HanAirDropCFG.jsonc", "AirDrop").Configure(builder =>
         {
           builder.AddJsonFile("HanAirDropCFG.jsonc", false, true);
@@ -60,9 +55,6 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
         {
             builder.AddJsonFile("HanAirDropItemCFG.jsonc", false, true);
         });
-
-        
-
         var collection = new ServiceCollection();
         collection.AddSwiftly(Core);
 
@@ -95,7 +87,7 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
         _airDropCFG = airDropMonitor.CurrentValue;
         _airBoxCFG = airBoxMonitor.CurrentValue;
         _airItemCFG = airItemMonitor.CurrentValue;
-        _airDropGlow = ServiceProvider.GetRequiredService<HanAirDropGlow>();
+        //_airDropGlow = ServiceProvider.GetRequiredService<HanAirDropGlow>();
         _teleportHelper = ServiceProvider.GetRequiredService<TeleportHelper>();
 
         airDropMonitor.OnChange(newConfig =>
@@ -103,33 +95,32 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
             _airDropCFG = newConfig;
             Core.Logger.LogInformation("[空投配置] AirDrop 配置文件已热重载并同步。");
         });
-
         airBoxMonitor.OnChange(newConfig =>
         {
             _airBoxCFG = newConfig;
             Core.Logger.LogInformation("[空投配置] AirDropBox 配置文件已热重载并同步。");
         });
-
         airItemMonitor.OnChange(newConfig =>
         {
             _airItemCFG = newConfig;
             Core.Logger.LogInformation("[空投配置] AirDropItem 配置文件已热重载并同步。");
         });
-
         Command();
         HookEvents();
-
-
-
     }
-
     public void HookEvents()
     {
-        Core.EntitySystem.HookEntityOutput<CTriggerMultiple>("OnStartTouch", TriggerCallback);
         Core.GameEvent.HookPre<EventRoundStart>(OnRoundStart);
         Core.GameEvent.HookPre<EventPlayerSpawn>(OnPlayerSpawn);
         Core.GameEvent.HookPre<EventPlayerDeath>(OnPlayerDeath);
+        Core.Event.OnEntityStartTouch += Event_OnEntityTouchHook;
+        Core.Event.OnEntityTakeDamage += Event_OnEntityHurt;
+        
     }
+
+    
+
+    
 
     public void Command()
     {
@@ -144,18 +135,17 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
     public void AdminCreate(ICommandContext context)
     {
         IPlayer? player = context.Sender;
+        if (player == null) return;
         CCSPlayerController? playerController = player.Controller;
-        if (player == null || playerController == null) return;
+        if (playerController == null) return;
 
         var steamId = player.SteamID;
         var perm = _airDropCFG.AdminCommandFlags;
-
         if (!PermissionUtils.HasPermissionOrOpen(Core, steamId, perm))
         {
             player.SendMessage(MessageType.Chat, $"{Core.Localizer["AdminCreateRandomBox", perm]}");
             return;
         }
-
         CreateDrop();
         Core.PlayerManager.SendMessage(MessageType.Chat, $"{Core.Localizer["AdminDropMessage", playerController.PlayerName]}");
     }
@@ -163,10 +153,15 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
     public void AdminSelect(ICommandContext context)
     {
         IPlayer? player = context.Sender;
+        if (player == null) return;
         CCSPlayerController? playerController = player.Controller;
-        if (player == null || playerController == null) return;
+        if (playerController == null) return;
 
-        if(!playerController.PawnIsAlive) return;
+        if (!playerController.PawnIsAlive) return;
+
+        var pawn = player.PlayerPawn;
+        if (pawn == null) return;
+
 
         var perm = _airDropCFG.AdminSelectBoxCommandFlags;
         if (!PermissionUtils.HasPermissionOrOpen(Core, player.SteamID, perm))
@@ -174,8 +169,6 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
             player.SendMessage(MessageType.Chat, $"{Core.Localizer["AdminSelectBoxFlags", perm]}");
             return;
         }
-
-
         // 冷却限制
         if (AdminCreateBoxCooldown.TryGetValue(player.SteamID, out var lastTime))
         {
@@ -186,51 +179,38 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
                 return;
             }
         }
-
         AdminCreateBoxCooldown[player.SteamID] = DateTime.Now;
-
         if (context.Args.Length < 2)
         {
             player.SendMessage(MessageType.Chat, $"{Core.Localizer["AdminSelectBoxError"]}"); //用法: !createbox 空投名 次数
             return;
         }
-
-        
         string boxName = context.Args[0];
         if (!int.TryParse(context.Args[1], out int count) || count <= 0)
         {
             player.SendMessage(MessageType.Chat, $"{Core.Localizer["AdminSelectBoxError2"]}"); //请输入有效的次数（正整数）
             return;
         }
-
         if (count > _airDropCFG.AdminSelectBoxCount)
         {
             player.SendMessage(MessageType.Chat, $"{Core.Localizer["AdminSelectBoxCount", _airDropCFG.AdminSelectBoxCount]}"); //请输入有效的次数（正整数）
             return;
         }
 
-        /*
-        // 查找配置中是否存在该空投名
-        var boxConfig = _airBoxCFG.BoxList.FirstOrDefault(b => b.Enabled && b.Name == boxName);
-
-        if (boxConfig == null)
-        {
-            player.SendMessage(MessageType.Chat, $"{Core.Localizer["AdminSelectBoxError3", boxName]}"); //找不到名为 [{boxName}] 的空投配置，或该配置未启用。
-            return;
-        }
-        */
-
-        var pawn = player.PlayerPawn;
-        if (pawn == null) return;
-
         SwiftlyS2.Shared.Natives.Vector spawnPos = GetForwardPosition(player, 120f);
-
         for (int i = 0; i < count; i++)
         {
             //每个空投间隔 80单位
             SwiftlyS2.Shared.Natives.Vector dropPos = new SwiftlyS2.Shared.Natives.Vector(spawnPos.X + (i * 50), spawnPos.Y, spawnPos.Z);
 
+            if (pawn?.AbsRotation == null)
+                return;
+
             SwiftlyS2.Shared.Natives.QAngle Angle = (SwiftlyS2.Shared.Natives.QAngle)pawn.AbsRotation;
+
+            if (pawn?.AbsVelocity == null)
+                return;
+
             SwiftlyS2.Shared.Natives.Vector Velocity = (SwiftlyS2.Shared.Natives.Vector)pawn.AbsVelocity;
 
             _airDropCreator.CreateAirDropAtPosition(boxName, dropPos, Angle, Velocity);
@@ -243,26 +223,28 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
 
     public static SwiftlyS2.Shared.Natives.Vector GetForwardPosition(IPlayer player, float distance = 100f)
     {
-        if (player == null || player.Pawn == null || player.PlayerPawn == null)
-            return new SwiftlyS2.Shared.Natives.Vector(0, 0, 0); // fallback
+        if (player == null)
+            return new SwiftlyS2.Shared.Natives.Vector(0, 0, 0);
+
+        var pawn = player.PlayerPawn;
+        if (pawn?.AbsOrigin == null)
+            return new SwiftlyS2.Shared.Natives.Vector(0, 0, 0);
 
         // 克隆原始位置和朝向，避免引用原始结构造成副作用
         SwiftlyS2.Shared.Natives.Vector origin = new SwiftlyS2.Shared.Natives.Vector(
-            player.PlayerPawn.AbsOrigin.Value.X,
-            player.PlayerPawn.AbsOrigin.Value.Y,
-            player.PlayerPawn.AbsOrigin.Value.Z
+            pawn.AbsOrigin.Value.X,
+            pawn.AbsOrigin.Value.Y,
+            pawn.AbsOrigin.Value.Z
         );
 
         SwiftlyS2.Shared.Natives.QAngle angle = new SwiftlyS2.Shared.Natives.QAngle(
-            player.PlayerPawn.EyeAngles.Pitch,
-            player.PlayerPawn.EyeAngles.Yaw,
-            player.PlayerPawn.EyeAngles.Roll
+            pawn.EyeAngles.Pitch,
+            pawn.EyeAngles.Yaw,
+            pawn.EyeAngles.Roll
         );
-
         // 根据 Yaw（水平旋转角）计算前方向量
         float yaw = angle.Yaw * MathF.PI / 180f;
         SwiftlyS2.Shared.Natives.Vector forward = new SwiftlyS2.Shared.Natives.Vector(MathF.Cos(yaw), MathF.Sin(yaw), 0);
-
         // 计算前方目标点（适当提高 Z 高度避免地面卡住）
         SwiftlyS2.Shared.Natives.Vector target = origin + forward * distance;
         target.Z += 10f;
@@ -282,16 +264,19 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
         if (count <= 0)
             return;
 
-
         //生成空投
         for (int i = 0; i < count; i++)
         {
             var spawn = _teleportHelper.GetRandomSpawnPosition(_airDropCFG.AirDropPosMode);
             if (spawn != null)
             {
-                _airDropCreator.CreateAirDrop(spawn.Value.Position, spawn.Value.Angle, spawn.Value.Velocity);
+                SwiftlyS2.Shared.Natives.Vector Pos = new SwiftlyS2.Shared.Natives.Vector(
+                    spawn.Value.Position.X,
+                    spawn.Value.Position.Y,
+                    spawn.Value.Position.Z + 100.0f
+                );
+                _airDropCreator.CreateAirDrop(Pos, spawn.Value.Angle, spawn.Value.Velocity);
                 Core.PlayerManager.SendMessage(MessageType.Chat, $"{Core.Localizer["AirDropMessage", spawn.Value.SpawnType]}");
-
             }
         }
 
@@ -358,21 +343,26 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
 
     }
 
+    
     private HookResult OnRoundStart(EventRoundStart @event)
     {
-        /*
-        foreach (var kvp in _airDropCreator.BoxTimers)
-        {
-            kvp.Value.Cancel();
-        }
-        
-        _airDropCreator.BoxTimers.Clear();
-        */
-        _airDropCreator.BoxTriggers.Clear();
+        //_airDropCreator.BoxTriggers.Clear();
 
-        var Human = Core.PlayerManager.GetAllPlayers().Where(client => client.PlayerPawn!.LifeState == (byte)LifeState_t.LIFE_ALIVE && !client.IsFakeClient);
-        foreach (var client in Human)
+        _airDropCreator.BoxData.Clear();
+
+        var Allplayer = Core.PlayerManager.GetAllPlayers();
+        foreach (var client in Allplayer)
         {
+            var pawn = client.PlayerPawn;
+            if (pawn == null) return HookResult.Continue;
+
+            var playerController = client.Controller;
+            if (playerController == null) return HookResult.Continue;
+
+            if (client.IsFakeClient) return HookResult.Continue;
+
+            if (!playerController.PawnIsAlive) return HookResult.Continue;
+
             int slot = client.PlayerID;
             if (_airDropCFG.PlayerPickEachRound > 0)
             {
@@ -382,9 +372,9 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
             {
                 if (!_airDropCreator.PlayerRoundPickUpLimit.ContainsKey(slot))
                     _airDropCreator.PlayerRoundPickUpLimit[slot] = new();
+
                 _airDropCreator.PlayerRoundPickUpLimit[slot][box.Code] = box.RoundPickLimit;
             }
-
         }
 
         if (!_airDropCFG.AirDropEnble || _airDropCFG.AirDropMode == 1)
@@ -405,13 +395,11 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
         MapStartDropTimer = null;
 
         float interval = (float)_airDropCFG.AirDropTimer;
-
         MapStartDropTimer = Core.Scheduler.DelayAndRepeatBySeconds(interval, interval, () =>
         {
             CreateDrop();
         });
         Core.Scheduler.StopOnMapChange(MapStartDropTimer);
-
 
         return HookResult.Continue;
     }
@@ -454,71 +442,91 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
         if (!_airDropCFG.AirDropEnble || _airDropCFG.AirDropMode == 0)
             return HookResult.Continue;
 
+        if(pawn.AbsOrigin == null)
+            return HookResult.Continue;
+
         SwiftlyS2.Shared.Natives.Vector Position = (SwiftlyS2.Shared.Natives.Vector)pawn.AbsOrigin;
+
+        if (pawn.AbsRotation == null)
+            return HookResult.Continue;
+
         SwiftlyS2.Shared.Natives.QAngle Angle = (SwiftlyS2.Shared.Natives.QAngle)pawn.AbsRotation;
+
         SwiftlyS2.Shared.Natives.Vector Velocity = (SwiftlyS2.Shared.Natives.Vector)pawn.AbsVelocity;
 
         if (Random.Shared.NextDouble() <= _airDropCFG.DeathDropPercent)
         {
             _airDropCreator.CreateAirDrop(Position, Angle, Velocity);
         }
-            
 
         return HookResult.Continue;
     }
-
-    private HookResult TriggerCallback(CEntityIOOutput entityIO, string outputName, CEntityInstance activator, CEntityInstance caller, float delay)
+    private void Event_OnEntityTouchHook(IOnEntityStartTouchEvent @event) //IOnEntityTouchHookEvent
     {
-        if (activator.DesignerName != "player")
-            return HookResult.Continue;
+        var activator = @event.Entity;
+        if (activator == null || activator.DesignerName != "player")
+            return;
 
         var pawn = activator.As<CCSPlayerPawn>();
-        if (pawn == null || !pawn.IsValid)
-            return HookResult.Continue;
-        
+        if (pawn == null || !pawn.IsValid) return;
 
-        var client = pawn.Controller.Value.As<CCSPlayerController>();
-        if (client == null || !client.IsValid)
-            return HookResult.Continue;
+        var controller = pawn.Controller.Value?.As<CCSPlayerController>();
+        if (controller == null || !controller.IsValid || !controller.PawnIsAlive)
+            return;
 
-        ulong? SteamID = client.SteamID;
-        if (SteamID == null || SteamID == 0)
-            return HookResult.Continue;
-        
-        IPlayer player = GetPlayerBySteamID(SteamID);
-        if (player == null || !player.IsValid)
-            return HookResult.Continue;
+        IPlayer? player = GetPlayerBySteamID(controller.SteamID);
+        if (player == null || !player.IsValid || player.IsFakeClient)
+            return;
 
-        if(player.IsFakeClient)
-            return HookResult.Continue;
+        var boxEntity = @event.OtherEntity;
+        if (boxEntity == null || !boxEntity.IsValid)
+            return;
 
-        if (_airDropCreator.BoxTriggers.TryGetValue(caller.Index, out var box))
+        if (!_airDropCreator.BoxData.TryGetValue(boxEntity.Index, out var data))
+            return;
+
+        if (boxEntity.Entity!.Name.StartsWith("华仔空投_"))
         {
-            BoxTouch(player, client, caller, box);
+            BoxTouch(player, boxEntity);
         }
-        return HookResult.Continue;  
+
     }
 
-    public IPlayer GetPlayerBySteamID(ulong? SteamID)
+    private void Event_OnEntityHurt(IOnEntityTakeDamageEvent @event) 
+    {
+        var victim = @event.Entity;
+        var attacker = @event.Info.Attacker.Value;
+        if (attacker == null || !attacker.IsValid)
+            return;
+        if (attacker.Entity!.Name.StartsWith("华仔空投_"))
+        {
+            //Core.PlayerManager.SendMessage(MessageType.Chat, "触发");
+            @event.Info.Damage = 0;
+        }
+        
+    }
+
+    public IPlayer? GetPlayerBySteamID(ulong? SteamID)
     {
         return Core.PlayerManager.GetAllPlayers().FirstOrDefault(x => !x.IsFakeClient && x.SteamID == SteamID);
     }
 
-    public void BoxTouch(IPlayer player, CCSPlayerController client, CEntityInstance trigger, CEntityInstance entity) //CCSPlayerController
+    public void BoxTouch(IPlayer player, CEntityInstance entity) 
     {
+        if (player == null || !player.IsValid)
+            return;
+
+        var client = player.Controller;
         if (client == null || !client.IsValid)
             return;
 
         var entRef = Core.EntitySystem.GetRefEHandle(entity);
         if (!entRef.IsValid) return;
 
-        var triggerRef = Core.EntitySystem.GetRefEHandle(trigger);
-        if (!triggerRef.IsValid) return;
 
-        // 通过触发器获取实体
-        if (!_airDropCreator.BoxTriggers.TryGetValue(trigger.Index, out var box) || !_airDropCreator.BoxData.TryGetValue(box, out var data))
+        if (!_airDropCreator.BoxData.TryGetValue(entity.Index, out var data))
         {
-            Console.WriteLine("[华仔空投] 找不到对应的空投数据");
+            Console.WriteLine("[H-AN] no data");
             return;
         }
         if (player.IsFakeClient)
@@ -559,8 +567,8 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
                 return;
             }
         }
-        
-        if (!PermissionUtils.HasPermissionOrOpen(Core, player.SteamID, data.Flags)) 
+
+        if (!PermissionUtils.HasPermissionOrOpen(Core, player.SteamID, data.Flags))
         {
             PlayBlockSound(player);
             string FlagsName = $"{data.Flags}";
@@ -568,20 +576,15 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
             return;
         }
 
-        var boxRef = Core.EntitySystem.GetRefEHandle(box);
-        if(!boxRef.IsValid) return;
+        var boxRef = Core.EntitySystem.GetRefEHandle(entity);
+        if (!boxRef.IsValid) return;
 
-        _airDropCreator.BoxData.Remove(boxRef.Value!); //清理数据
-        _airDropCreator.BoxTriggers.Remove(trigger.Index);
-        if (triggerRef.IsValid)
+        _airDropCreator.BoxData.Remove(boxRef.Value!.Index!); //清理数据
+        if (entity.IsValid)
         {
-            trigger.AcceptInput("Kill", 0);
+            entity.AcceptInput("Kill", 0);
         }
-        if (box.IsValid)
-        {
-            box.AcceptInput("Kill", 0);
-        }
-        
+
         if (_airDropCFG.PlayerPickEachRound > 0 && _airDropCreator.PlayerPickUpLimit[player.PlayerID] > 0)
         {
             _airDropCreator.PlayerPickUpLimit[player.PlayerID]--;
@@ -600,24 +603,24 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
         if (data.Items.Length == 0)
         {
             PlayBlockSound(player);
-            Console.WriteLine("[华仔空投] 警告 空投道具池为空");
+            Console.WriteLine("[H-AN] Item Empty");
             return;
         }
 
-         var validItems = _airItemCFG.ItemList
-        .Where(item => item.Enabled && data.Items.Contains(item.Name)) // 只按名字匹配
-        .Where(item => PermissionUtils.HasPermissionOrOpen(Core, player.SteamID, item.Permissions))
-        .ToList();
+        var validItems = _airItemCFG.ItemList
+       .Where(item => item.Enabled && data.Items.Contains(item.Name)) // 只按名字匹配
+       .Where(item => PermissionUtils.HasPermissionOrOpen(Core, player.SteamID, item.Permissions))
+       .ToList();
 
         // 玩家没有任何可用权限的道具，给出提示
-        
+
         if (validItems.Count == 0)
         {
             PlayBlockSound(player);
             player.SendMessage(MessageType.Chat, $"{Core.Localizer["NoPermissionToItems"]}");
             return;
         }
- 
+
         var chosenItem = _airBoxCFG.SelectByProbability(validItems);
         if (chosenItem == null)
         {
@@ -626,7 +629,11 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
             return;
         }
 
-        player.ExecuteCommand($"{chosenItem.Command}");
+        //player.ExecuteCommand($"{chosenItem.Command}");
+
+        //Core.PlayerManager.SendMessage(MessageType.Chat, $"输出指令 {chosenItem.Command}");
+        player.ExecuteCommand(chosenItem.Command);
+        //Core.PlayerManager.SendMessage(MessageType.Chat, $" {chosenItem.Command} 运行完毕");
 
         Core.PlayerManager.SendMessage(MessageType.Chat, $"{Core.Localizer["PlayerPickUpMessage", client.PlayerName, data.Name, chosenItem.Name]}");
 
@@ -646,7 +653,7 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
 
 
     }
-
+    
     public void PlayBlockSound(IPlayer player)
     {
         if (!string.IsNullOrEmpty(_airDropCFG.BlockPickUpSoundEvent))

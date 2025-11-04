@@ -3,16 +3,11 @@ using SwiftlyS2.Shared.SchemaDefinitions;
 using Microsoft.Extensions.Logging;
 using SwiftlyS2.Shared.Natives;
 using Microsoft.Extensions.Options;
-using static HanAirDropS2.HanAirDropBoxConfig;
-using System.Xml.Linq;
 using SwiftlyS2.Shared.Players;
-using System;
-using System.Threading.Channels;
-using System.Collections.Generic;
-using SwiftlyS2.Shared.Sounds;
-using System.Numerics;
+using static HanAirDropS2.HanAirDropBoxConfig;
 using static Dapper.SqlMapper;
-using Mono.Cecil.Cil;
+using static HanAirDropS2.HanAirDropCreateBox;
+
 
 namespace HanAirDropS2;
 
@@ -25,20 +20,15 @@ public class HanAirDropCreateBox
     private readonly IOptionsMonitor<HanAirDropItemConfig> _airItemConfig;
     private readonly HanAirDropGlow _airDropGlow;
 
-    public Dictionary<CEntityInstance, AirBoxData> BoxData = new();
-
-    public Dictionary<uint, CEntityInstance> BoxTriggers = new();
+    public Dictionary<uint, AirBoxData> BoxData = new();
 
     // 使用字典存储每个箱子的限制
     public int[] PlayerPickUpLimit = new int[65];
     public Dictionary<int, Dictionary<int, int>> PlayerRoundPickUpLimit = new(); // [玩家Slot][箱子Code] = 剩余次数
     public Dictionary<int, Dictionary<int, int>> PlayerSpawnPickUpLimit = new(); // [玩家Slot][箱子Code] = 剩余次数
 
-    //public Dictionary<CEntityInstance, CancellationTokenSource> BoxTimers = new Dictionary<CEntityInstance, CancellationTokenSource>();
-
-
-    public string physicsBox = "models/de_inferno/inferno_winebar_interior_01/inferno_winebar_crate_01_a.vmdl";
-    //"models/generic/plastic_crate_kit_01/pkkit01_crate_02_b_small.vmdl";
+    //public string physicsBox = "models/de_inferno/inferno_winebar_interior_01/inferno_winebar_crate_01_a.vmdl";
+    public string physicsBox = "models/generic/crate_plastic_01/crate_plastic_01_bottom.vmdl";
 
     public class AirBoxData
     {
@@ -82,25 +72,26 @@ public class HanAirDropCreateBox
             return;
         }
 
-        _logger.LogInformation("生成空投：{BoxName} 模型：{Model}", box.Name, box.ModelPath);
+        //_logger.LogInformation("生成空投：{BoxName} 模型：{Model}", box.Name, box.ModelPath);
 
 
         CPhysicsPropOverride Box = Core.EntitySystem.CreateEntity<CPhysicsPropOverride>();
         if (Box == null)
             return;
 
-        Box.Collision.CollisionGroup = (byte)CollisionGroup.Debris;
-        Box.Collision.CollisionGroupUpdated();
-
         Box.CBodyComponent!.SceneNode!.Owner!.Entity!.Flags &= ~(uint)(1 << 2);
 
+
+
         Box.SetModel(physicsBox);
+
+        Box.Collision.CollisionGroup = (byte)CollisionGroup.Dissolving;
+        Box.Collision.CollisionGroupUpdated();
+
         Box.DispatchSpawn();
 
-        //Box.SetScale(1.5f);
-
        
-
+        //Box.SetScale(1.5f); //箱子大小 未使用
 
         string model = Box?.CBodyComponent?.SceneNode?.GetSkeletonInstance().ModelState.ModelName ?? string.Empty;
 
@@ -110,9 +101,7 @@ public class HanAirDropCreateBox
         var boxRef = Core.EntitySystem.GetRefEHandle(Box);
         if (!boxRef.IsValid) return;
 
-        //var BoxId = Box.Index;
-
-        BoxData[Box] = new AirBoxData
+        BoxData[Box.Index] = new AirBoxData
         {
             Code = box.Code,
             Items = box.Items.Split(','),
@@ -125,35 +114,11 @@ public class HanAirDropCreateBox
             OpenGlow = box.OpenGlow
         };
 
-        /*
-        // ======== 打印配置 =========
-        var airBox = BoxData[Box];
-        string items = string.Join(",", airBox.Items);
-        string configInfo =
-            $"[create空投配置]\n" +
-            $"Code: {airBox.Code}\n" +
-            $"Name: {airBox.Name}\n" +
-            $"Items: {items}\n" +
-            $"TeamOnly: {airBox.TeamOnly}\n" +
-            $"RoundPickLimit: {airBox.RoundPickLimit}\n" +
-            $"SpawnPickLimit: {airBox.SpawnPickLimit}\n" +
-            $"DropSound: {airBox.DropSound}\n" +
-            $"Flags: {airBox.Flags}\n" +
-            $"OpenGlow: {airBox.OpenGlow}";
-        Core.PlayerManager.SendMessage(MessageType.Chat, configInfo);
-        // ============================
-        */
+
+        //PrintBoxData(BoxData[Box]); //测试用输出Box数据
 
         Box!.Teleport((SwiftlyS2.Shared.Natives.Vector)positions, (SwiftlyS2.Shared.Natives.QAngle)QAngles, (SwiftlyS2.Shared.Natives.Vector)velocitys);
 
-        
-        CTriggerMultiple trigger = CreateTrigger(boxRef.Value!);
-        var triggerRef = Core.EntitySystem.GetRefEHandle(trigger);
-        if (!triggerRef.IsValid) return;
-        
-
-        BoxTriggers.Add(trigger.Index, Box);
-        
         if (!string.IsNullOrEmpty(box.DropSound))
         {
             var sound = new SwiftlyS2.Shared.Sounds.SoundEvent(box.DropSound, 1.0f, 1.0f);
@@ -164,7 +129,6 @@ public class HanAirDropCreateBox
                 sound.Emit();
             });
         }
-        
 
         float KillSecond = mainCfg.AirDropKillTimer;
         Core.Scheduler.DelayBySeconds(KillSecond, () =>
@@ -175,36 +139,27 @@ public class HanAirDropCreateBox
                 if (!boxRef.IsValid)
                     return;
 
-                if (!triggerRef.IsValid)
-                    return;
-
                 // 重新取实体对象
                 var box = boxRef.Value;
-                var trigger = triggerRef.Value;
-
-                if (box == null || trigger == null)
+                if (box == null)
                     return;
 
                 // 正常执行
-                BoxSelfKill(triggerRef, boxRef);
+                BoxSelfKill(boxRef);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[空投系统] 延迟自杀任务异常");
             }
         });
-        
 
 
         if (box.OpenGlow)
         {
             HanAirDropGlow.TryParseColor(box.GlowColor, out var glowColor, new SwiftlyS2.Shared.Natives.Color(255, 255, 0,  0));
-            _airDropGlow.SetGlow(Box!, glowColor.R, glowColor.G, glowColor.B, glowColor.A);
-        }
-        
-        string newColor = BoxData[Box!].OpenGlow ? box.GlowColor : "0,0,0,0";
-        var cloneprop = CreateClone(Box!, box.ModelPath, propName, newColor);
-        
+            var cloneprop = CreateClone(Box!, box.ModelPath, propName, box.GlowColor);
+        }   
+
     }
 
     public CDynamicProp? CreateClone(CPhysicsPropOverride prop, string model, string propName, string glowcolor)
@@ -227,98 +182,39 @@ public class HanAirDropCreateBox
 
         clone.DispatchSpawn();
 
-        //clone.Render.A = 0;
-        //clone.RenderUpdated();
 
-        clone.Teleport(prop.AbsOrigin, prop.AbsRotation, null);
+        SwiftlyS2.Shared.Natives.QAngle vAngles = new SwiftlyS2.Shared.Natives.QAngle(
+            prop.AbsRotation!.Value.Pitch,
+            prop.AbsRotation.Value.Yaw + 90.0f,
+            prop.AbsRotation.Value.Roll
+        );
+
+        clone.Teleport(prop.AbsOrigin, vAngles, null);
         clone.UseAnimGraph = false;
 
-        clone.AcceptInput("FollowEntity", propName, prop, prop ); 
+        clone!.AcceptInput("SetParent", "!activator", prop, clone);
 
 
         var defaultGlowColor = new SwiftlyS2.Shared.Natives.Color(255, 0, 0, 255);
         HanAirDropGlow.TryParseColor(glowcolor, out var glowColor, defaultGlowColor);
         _airDropGlow.SetGlow(clone, glowColor.R, glowColor.G, glowColor.B, glowColor.A);
 
-        Core.Scheduler.NextTick(() =>
-        {
-            prop.Render.A = 0;
-            prop.RenderUpdated();
-        });
-
+        prop.Render.A = 0;
+        prop.RenderUpdated();
 
         return clone;
     }
-    /*
-    public void SetPropInvisible(CPhysicsPropOverride entity)
+
+    public void BoxSelfKill(CHandle<CPhysicsPropOverride> boxRef)
     {
-        if (entity == null || !entity.IsValid)
-        {
-            return;
-        }
-
-        entity.Render = new SwiftlyS2.Shared.Natives.Color(255, 255, 255, 0);
-
-    }
-    */
-
-    public CTriggerMultiple CreateTrigger(CBaseEntity parent)
-    {
-        var trigger = Core.EntitySystem.CreateEntity<CTriggerMultiple>();
-
-        if (trigger == null)
-        {
-            throw new Exception($"Trigger entity \"{parent.Entity!.Name}\" could not be created!");
-        }
-
-        trigger.Entity!.Name = parent.Entity!.Name + "_trigger";
-        trigger.Spawnflags = 1;
-        trigger.CBodyComponent!.SceneNode!.Owner!.Entity!.Flags &= ~(uint)(1 << 2);
-        trigger.Collision.SolidType = SolidType_t.SOLID_VPHYSICS;
-        trigger.Collision.SolidFlags = 0;
-        trigger.Collision.CollisionGroup = 14;
-
-        trigger.DispatchSpawn();
-        trigger.SetModel(parent.CBodyComponent!.SceneNode!.GetSkeletonInstance().ModelState.ModelName);
-
-        var position = parent?.AbsOrigin;
-        var EntAngle = parent?.AbsRotation;
-        var EntVelocity = parent?.AbsVelocity;
-        if (position != null)
-        {
-            trigger?.Teleport((SwiftlyS2.Shared.Natives.Vector)position, (SwiftlyS2.Shared.Natives.QAngle)EntAngle!, (SwiftlyS2.Shared.Natives.Vector)EntVelocity!);
-        }
-
-        trigger!.AcceptInput("SetParent", "!activator", parent, trigger);
-        trigger!.AcceptInput("Enable", 0, parent, trigger);
-
-        return trigger;
-    }
-
-    public void BoxSelfKill(CHandle<CTriggerMultiple> triggerRef, CHandle<CPhysicsPropOverride> boxRef)
-    {
-        if (triggerRef.IsValid)
-        {
-            if (BoxTriggers.ContainsKey(triggerRef.Value!.Index))
-            {
-                var linkedBox = BoxTriggers[triggerRef.Value!.Index];
-                BoxData.Remove(linkedBox);
-                BoxTriggers.Remove(triggerRef.Value!.Index);
-
-                triggerRef.Value!.AcceptInput("Kill", 0);
-
-                //Core.PlayerManager.SendMessage(MessageType.Chat, "triggerRef 存在 已自动删除");
-            }
-        }
         if (boxRef.IsValid)
         {
-            BoxData.Remove(boxRef.Value!);
+            BoxData.Remove(boxRef.Value!.Index!);
             boxRef.Value!.AcceptInput("Kill", 0);
 
             //Core.PlayerManager.SendMessage(MessageType.Chat, "boxRef 存在 已自动删除");
         }
     }
-
 
     public void CreateAirDropAtPosition(string boxName, SwiftlyS2.Shared.Natives.Vector positions, SwiftlyS2.Shared.Natives.QAngle QAngles, SwiftlyS2.Shared.Natives.Vector velocitys)
     {
@@ -326,27 +222,23 @@ public class HanAirDropCreateBox
         var boxCfg = _boxConfig.CurrentValue;
 
         var config = boxCfg.BoxList.FirstOrDefault(b => b.Enabled && b.Name == boxName);
+        if(config == null)
+            return;
 
         CPhysicsPropOverride Box = Core.EntitySystem.CreateEntity<CPhysicsPropOverride>();
         if (Box == null)
             return;
 
-        Box.Collision.CollisionGroup = (byte)CollisionGroup.Debris;
-        Box.Collision.CollisionGroupUpdated();
-
         Box.CBodyComponent!.SceneNode!.Owner!.Entity!.Flags &= ~(uint)(1 << 2);
 
         Box.SetModel(physicsBox);
+
+        Box.Collision.CollisionGroup = (byte)CollisionGroup.Dissolving;
+        Box.Collision.CollisionGroupUpdated();
+
         Box.DispatchSpawn();
 
         //Box.SetScale(2.0f);
-
-        Box.Render.A = 0;
-        Box.RenderUpdated();
-        //Box.Render = new SwiftlyS2.Shared.Natives.Color(0, 0, 0, 0);
-        //Box.RenderUpdated();
-
-
 
         string model = Box?.CBodyComponent?.SceneNode?.GetSkeletonInstance().ModelState.ModelName ?? string.Empty;
 
@@ -356,7 +248,7 @@ public class HanAirDropCreateBox
         var boxRef = Core.EntitySystem.GetRefEHandle(Box);
         if (!boxRef.IsValid) return;
 
-        BoxData[Box] = new AirBoxData
+        BoxData[Box.Index] = new AirBoxData
         {
             Code = config.Code,
             Items = config.Items.Split(','),
@@ -368,34 +260,11 @@ public class HanAirDropCreateBox
             Flags = config.Flags,
             OpenGlow = config.OpenGlow
         };
-        /*
-        // ======== 打印当前空投配置 =========
-        var airBox = BoxData[Box];
-        string items = string.Join(",", airBox.Items);
-        string configInfo =
-            $"[Select空投配置]\n" +
-            $"Code: {airBox.Code}\n" +
-            $"Name: {airBox.Name}\n" +
-            $"Items: {items}\n" +
-            $"TeamOnly: {airBox.TeamOnly}\n" +
-            $"RoundPickLimit: {airBox.RoundPickLimit}\n" +
-            $"SpawnPickLimit: {airBox.SpawnPickLimit}\n" +
-            $"DropSound: {airBox.DropSound}\n" +
-            $"Flags: {airBox.Flags}\n" +
-            $"OpenGlow: {airBox.OpenGlow}";
-        Core.PlayerManager.SendMessage(MessageType.Chat, configInfo);
-        // ============================
-        */
+
+        //PrintBoxData(BoxData[Box.Index]); //测试用输出Box数据
+       
 
         Box!.Teleport((SwiftlyS2.Shared.Natives.Vector)positions, (SwiftlyS2.Shared.Natives.QAngle)QAngles, (SwiftlyS2.Shared.Natives.Vector)velocitys);
-
-
-        CTriggerMultiple trigger = CreateTrigger(boxRef.Value!);
-
-        var triggerRef = Core.EntitySystem.GetRefEHandle(trigger);
-        if (!triggerRef.IsValid) return;
-
-        BoxTriggers.Add(trigger.Index, Box);
 
         if (!string.IsNullOrEmpty(config.DropSound))
         {
@@ -408,30 +277,56 @@ public class HanAirDropCreateBox
             });
         }
 
-
         float KillSecond = mainCfg.AirDropKillTimer;
         Core.Scheduler.DelayBySeconds(KillSecond, () =>
         {
-            BoxSelfKill(triggerRef, boxRef);
+            try
+            {
+                // 引用失效则提前退出
+                if (!boxRef.IsValid)
+                    return;
+
+                // 重新取实体对象
+                var box = boxRef.Value;
+                if (box == null)
+                    return;
+
+                // 正常执行
+                BoxSelfKill(boxRef);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[空投系统] 延迟自杀任务异常");
+            }
         });
 
 
         if (config.OpenGlow)
         {
             HanAirDropGlow.TryParseColor(config.GlowColor, out var glowColor, new SwiftlyS2.Shared.Natives.Color(255, 255, 0, 0));
-            _airDropGlow.SetGlow(Box!, glowColor.R, glowColor.G, glowColor.B, glowColor.A);
+            var cloneprop = CreateClone(Box!, config.ModelPath, propName, config.GlowColor);
         }
-        string newColor = BoxData[Box!].OpenGlow ? config.GlowColor : "0,0,0,0";
-        var cloneprop = CreateClone(Box!, config.ModelPath, propName, newColor);
+        
     }
 
+    public void PrintBoxData(AirBoxData airBox, string title = "[空投配置信息]")
+    {
+        string items = string.Join(",", airBox.Items ?? Array.Empty<string>());
+        string configInfo =
+            $"{title}\n" +
+            $"Code: {airBox.Code}\n" +
+            $"Name: {airBox.Name}\n" +
+            $"Items: {items}\n" +
+            $"TeamOnly: {airBox.TeamOnly}\n" +
+            $"RoundPickLimit: {airBox.RoundPickLimit}\n" +
+            $"SpawnPickLimit: {airBox.SpawnPickLimit}\n" +
+            $"DropSound: {airBox.DropSound}\n" +
+            $"Flags: {airBox.Flags}\n" +
+            $"OpenGlow: {airBox.OpenGlow}";
 
-
-
-
-
-
-
-
+        Core.PlayerManager.SendMessage(MessageType.Chat, configInfo);
+    }
 }
+
+
 

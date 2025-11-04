@@ -1,37 +1,28 @@
 
 
-using System;
-using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
-using Mono.Cecil.Cil;
 using SwiftlyS2.Shared;
 using static HanAirDropS2.HanAirDropItemConfig;
 
 namespace HanAirDropS2;
 public class HanAirDropBoxConfig
 {
-    private ILogger<HanAirDropCreateBox> logger;
-    private ISwiftlyCore Core;
-
     private static readonly Random _random = new Random();
-
-    private HanAirDropItemConfig _airItemCFG = null!;
-
     public class Box
     {
-        public string Name { get; set; }
-        public string ModelPath { get; set; }
-        public string DropSound { get; set; }
-        public string Items { get; set; }
-        public int TeamOnly { get; set; }
-        public int RoundPickLimit { get; set; }
-        public int SpawnPickLimit { get; set; }
-        public float Probability { get; set; }
-        public bool Enabled { get; set; }
-        public int Code { get; set; }
-        public string Flags { get; set; }
-        public bool OpenGlow { get; set; }
-        public string GlowColor { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string ModelPath { get; set; } = string.Empty;
+        public string DropSound { get; set; } = string.Empty;
+        public string Items { get; set; } = string.Empty;
+        public int TeamOnly { get; set; } = 0;
+        public int RoundPickLimit { get; set; } = 0;
+        public int SpawnPickLimit { get; set; } = 0;
+        public float Probability { get; set; } = 0.5f;
+        public bool Enabled { get; set; } = true;
+        public int Code { get; set; } = 1;
+        public string Flags { get; set; } = string.Empty;
+        public bool OpenGlow { get; set; } = true;
+        public string GlowColor { get; set; } = string.Empty;
     }
 
     public List<Box> BoxList { get; set; } = new List<Box>();
