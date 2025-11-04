@@ -2,7 +2,7 @@
   "AirDrop": {
     "AirDropEnble": true,
     "AirDropMode": 0,
-    "AirDropPosMode": 1,
+    "AirDropPosMode": 0,
     "DeathDropPercent": 0.1,
     "AirDropTimer": 60,
     "AirDropKillTimer": 20,
@@ -22,4 +22,5 @@
     "AdminSelectBoxCount": 10,
     "AdminSelectBoxColdCown": 1
   }
+
 }
