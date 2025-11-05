@@ -1,15 +1,23 @@
 
-<img width="600" height="131" alt="68747470733a2f2f70616e2e73616d7979632e6465762f732f56596d4d5845" src="https://github.com/user-attachments/assets/d0316faa-c2d0-478f-a642-1e3c3651f1d4" />
+<div align="center"><img width="600" height="131" alt="68747470733a2f2f70616e2e73616d7979632e6465762f732f56596d4d5845" src="https://github.com/user-attachments/assets/d0316faa-c2d0-478f-a642-1e3c3651f1d4" /></div>
 
-# [华仔]CS2空投补给系统 Airdrop Supply System
-使用SwiftlyS2框架编写的空投补给系统插件/Airdrop support system plugin developed using the SwiftlyS2 framework.
-创建空投补给，多配置适用于任何模式，通过命令结合空投系统 给予玩家道具状态等任何东西. 
+<div align="center"># [华仔]CS2空投补给系统 Airdrop Supply System</div>
 
+<div align="center">使用SwiftlyS2框架编写的空投补给系统插件</div>
+
+<div align="center">Airdrop support system plugin developed using the SwiftlyS2 framework.</div>
+
+<div align="center">创建空投补给，多配置适用于任何模式，通过命令结合空投系统 给予玩家道具状态等任何东西. </div>
+
+<div align="center">
 https://www.youtube.com/watch?v=yVuhYGvRtDA
 
 https://www.bilibili.com/video/BV1wJZ6YvENd
+</div>
+<div align="center">Create airdrop supplies with multiple configurations suitable for any game mode. </div>
+<div align="center">Through commands integrated with the airdrop system, players can receive weapons, items, status effects, and more.</div>
 
-Create airdrop supplies with multiple configurations suitable for any game mode. Through commands integrated with the airdrop system, players can receive weapons, items, status effects, and more.
+---
 
 /* 基础设置 / Basic Settings */
 
@@ -86,6 +94,8 @@ Spawn count = (Online players / AirDropPlayerCount) * AirDropDynamicCount
 
 Use !createbox or console command sw_createbox to summon manually
 
+---
+
 /* 空投箱基础设置 / Box Basic Settings */
 
 Name = "空投测试1",               // 箱子显示名称 / Box display name
@@ -155,6 +165,8 @@ Each Code must be unique
 
 Disable unused boxes (Enabled=false)
 
+---
+
 /* 道具基础设置 / Item Basic Settings */
 
 {
@@ -219,6 +231,8 @@ Must match your plugin's command system
 示例场景 / Example Scenario
 
 
+---
+
 # 当玩家获得AK-47时 / When player gets AK-47:
 
 服务器执行 -> sw_9lGNxrYEnUNQmyCi @玩家ID
@@ -267,6 +281,8 @@ Current item probability / Sum of all enabled items' probabilities
 
 隐藏命令系统安全说明 / Hidden Command Security Guide
 
+---
+
 █ 核心安全机制 / Core Security Mechanism
 
 [Command("9lGNxrYEnUNQmyCi")]
@@ -305,6 +321,8 @@ KeePass密码生成器
 ⚠️ 密码泄露风险
 
 ⚠️ PASSWORD LEAK RISK
+
+---
 
 若玩家获知完整命令格式：
 
