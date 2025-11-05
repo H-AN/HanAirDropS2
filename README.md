@@ -1,3 +1,6 @@
+
+<img width="600" height="131" alt="68747470733a2f2f70616e2e73616d7979632e6465762f732f56596d4d5845" src="https://github.com/user-attachments/assets/d0316faa-c2d0-478f-a642-1e3c3651f1d4" />
+
 # [华仔]CS2空投补给系统 Airdrop Supply System
 使用SwiftlyS2框架编写的空投补给系统插件/Airdrop support system plugin developed using the SwiftlyS2 framework.
 创建空投补给，多配置适用于任何模式，通过命令结合空投系统 给予玩家道具状态等任何东西. 
