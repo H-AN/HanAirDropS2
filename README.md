@@ -10,9 +10,9 @@
 <div align="center">创建空投补给，多配置适用于任何模式，通过命令结合空投系统 给予玩家道具状态等任何东西. </div>
 
 <div align="center">
-https://www.youtube.com/watch?v=yVuhYGvRtDA
+https://www.youtube.com/watch?v=Ho0A_rzrsko
 
-https://www.bilibili.com/video/BV1wJZ6YvENd
+https://www.bilibili.com/video/BV1NL1QBPE1e
 </div>
 <div align="center">Create airdrop supplies with multiple configurations suitable for any game mode. </div>
 <div align="center">Through commands integrated with the airdrop system, players can receive weapons, items, status effects, and more.</div>
