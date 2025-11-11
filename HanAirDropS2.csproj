@@ -13,7 +13,4 @@
 	<ItemGroup>
 		<PackageReference Include="SwiftlyS2.CS2" Version="*" />
 	</ItemGroup>
-
 </Project>
-
-

@@ -17,88 +17,93 @@ public class TeleportHelper
         _airDropConfig = airDropConfig;
     }
 
-
-    public (SwiftlyS2.Shared.Natives.Vector Position,SwiftlyS2.Shared.Natives.QAngle Angle,SwiftlyS2.Shared.Natives.Vector Velocity,string SpawnType)? GetRandomSpawnPosition(int spawnType)
+    public (SwiftlyS2.Shared.Natives.Vector Position, SwiftlyS2.Shared.Natives.QAngle Angle, SwiftlyS2.Shared.Natives.Vector Velocity, string SpawnTypeKey)? GetRandomSpawnPosition(int spawnType)
     {
         var mainCfg = _airDropConfig.CurrentValue;
 
-        List<(SpawnPoint spawn, string type)> spawnPoints = new List<(SpawnPoint, string)>();
+        List<(SpawnPoint spawn, string typeKey)> spawnPoints = new List<(SpawnPoint, string)>();
 
-        string ctspawnposname = Core.Localizer["CtSpawnPointName"];
-        string tspawnposname = Core.Localizer["TSpawnPointName"];
-        string dspawnposname = Core.Localizer["DSpawnPointName"];
+        // 仅存 key，不做本地化
+        string ctSpawnKey = "CtSpawnPointName";
+        string tSpawnKey = "TSpawnPointName";
+        string dSpawnKey = "DSpawnPointName";
 
         switch (spawnType)
         {
-            case 0: // T + CT + 死亡竞赛复活点 混合
+            case 0:
                 spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_player_counterterrorist")
-                    .Select(s => (s, $"{ctspawnposname}")));
+                    .Select(s => (s, ctSpawnKey)));
                 spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_player_terrorist")
-                    .Select(s => (s, $"{tspawnposname}")));
+                    .Select(s => (s, tSpawnKey)));
                 if (mainCfg.Openrandomspawn != 0)
                 {
                     spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_deathmatch_spawn")
-                    .Select(s => (s, $"{dspawnposname}")));
+                        .Select(s => (s, dSpawnKey)));
                 }
                 break;
 
-            case 1: // 仅 CT
+            case 1:
                 spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_player_counterterrorist")
-                    .Select(s => (s, $"{ctspawnposname}")));
+                    .Select(s => (s, ctSpawnKey)));
                 break;
 
-            case 2: // 仅 T
+            case 2:
                 spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_player_terrorist")
-                    .Select(s => (s, $"{tspawnposname}")));
+                    .Select(s => (s, tSpawnKey)));
                 break;
-            case 3: // 仅 死亡竞赛复活点
+
+            case 3:
                 if (mainCfg.Openrandomspawn != 0)
                 {
                     spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_deathmatch_spawn")
-                    .Select(s => (s, $"{dspawnposname}")));
+                        .Select(s => (s, dSpawnKey)));
                 }
                 else
                 {
                     spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_player_counterterrorist")
-                                        .Select(s => (s, $"{ctspawnposname}")));
+                        .Select(s => (s, ctSpawnKey)));
                     spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_player_terrorist")
-                        .Select(s => (s, $"{tspawnposname}")));
-                }
-                break;
-            case 4: // 仅 CT + T
-                spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_player_counterterrorist")
-                    .Select(s => (s, $"{ctspawnposname}")));
-                spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_player_terrorist")
-                    .Select(s => (s, $"{tspawnposname}")));
-                break;
-            case 5: // 仅 CT + 死亡竞赛复活点
-                spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_player_counterterrorist")
-                    .Select(s => (s, $"{ctspawnposname}")));
-                if (mainCfg.Openrandomspawn != 0)
-                {
-                    spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_deathmatch_spawn")
-                    .Select(s => (s, $"{dspawnposname}")));
-                }
-                break;
-            case 6: // 仅 T + 死亡竞赛复活点
-                spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_player_terrorist")
-                    .Select(s => (s, $"{ctspawnposname}")));
-                if (mainCfg.Openrandomspawn != 0)
-                {
-                    spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_deathmatch_spawn")
-                    .Select(s => (s, $"{dspawnposname}")));
+                        .Select(s => (s, tSpawnKey)));
                 }
                 break;
 
-            default: // 全部默认混合
+            case 4:
                 spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_player_counterterrorist")
-                    .Select(s => (s, $"{ctspawnposname}")));
+                    .Select(s => (s, ctSpawnKey)));
                 spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_player_terrorist")
-                    .Select(s => (s, $"{tspawnposname}")));
+                    .Select(s => (s, tSpawnKey)));
+                break;
+
+            case 5:
+                spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_player_counterterrorist")
+                    .Select(s => (s, ctSpawnKey)));
                 if (mainCfg.Openrandomspawn != 0)
                 {
                     spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_deathmatch_spawn")
-                    .Select(s => (s, $"{dspawnposname}")));
+                        .Select(s => (s, dSpawnKey)));
+                }
+                break;
+
+            case 6:
+                // 这里是个 bug 你之前把 t spawn 标记成 ctspawn，已改正为 tSpawnKey
+                spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_player_terrorist")
+                    .Select(s => (s, tSpawnKey)));
+                if (mainCfg.Openrandomspawn != 0)
+                {
+                    spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_deathmatch_spawn")
+                        .Select(s => (s, dSpawnKey)));
+                }
+                break;
+
+            default:
+                spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_player_counterterrorist")
+                    .Select(s => (s, ctSpawnKey)));
+                spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_player_terrorist")
+                    .Select(s => (s, tSpawnKey)));
+                if (mainCfg.Openrandomspawn != 0)
+                {
+                    spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_deathmatch_spawn")
+                        .Select(s => (s, dSpawnKey)));
                 }
                 break;
         }
@@ -106,7 +111,7 @@ public class TeleportHelper
         if (!spawnPoints.Any())
             return null;
 
-        var (randomSpawn, spawnTypeName) = spawnPoints[Random.Shared.Next(spawnPoints.Count)];
+        var (randomSpawn, spawnTypeKey) = spawnPoints[Random.Shared.Next(spawnPoints.Count)];
 
         var position = randomSpawn?.AbsOrigin;
         var angle = randomSpawn?.AbsRotation;
@@ -119,9 +124,9 @@ public class TeleportHelper
             new SwiftlyS2.Shared.Natives.Vector(position.Value.X, position.Value.Y, position.Value.Z),
             new SwiftlyS2.Shared.Natives.QAngle(angle.Value.Roll, angle.Value.Yaw, angle.Value.Pitch),
             new SwiftlyS2.Shared.Natives.Vector(velocity.Value.X, velocity.Value.Y, velocity.Value.Z),
-            spawnTypeName
+            spawnTypeKey
         );
-
     }
+
 
 }

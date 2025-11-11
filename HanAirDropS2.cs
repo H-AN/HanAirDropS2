@@ -17,13 +17,14 @@ using System.Net.Sockets;
 using static HanAirDropS2.HanAirDropBoxConfig;
 using static Dapper.SqlMapper;
 using System.Diagnostics.Tracing;
+using System.Numerics;
 
 
 namespace HanAirDropS2;
 
 [PluginMetadata(
     Id = "HanAirDropS2",
-    Version = "2.0.0",
+    Version = "2.1.0",
     Name = "空投支援 for Sw2/HanAirDropS2",
     Author = "H-AN",
     Description = "CS2空投支援 SW2版本 CS2 AirDrop for SW2."
@@ -143,11 +144,11 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
         var perm = _airDropCFG.AdminCommandFlags;
         if (!PermissionUtils.HasPermissionOrOpen(Core, steamId, perm))
         {
-            player.SendMessage(MessageType.Chat, $"{Core.Localizer["AdminCreateRandomBox", perm]}");
+            player.SendMessage(MessageType.Chat, $"{Core.Translation.GetPlayerLocalizer(player)["AdminCreateRandomBox", perm]}");
             return;
         }
         CreateDrop();
-        Core.PlayerManager.SendMessage(MessageType.Chat, $"{Core.Localizer["AdminDropMessage", playerController.PlayerName]}");
+        Core.PlayerManager.SendMessage(MessageType.Chat, $"{Core.Translation.GetPlayerLocalizer(player)["AdminDropMessage", playerController.PlayerName]}");
     }
 
     public void AdminSelect(ICommandContext context)
@@ -166,7 +167,7 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
         var perm = _airDropCFG.AdminSelectBoxCommandFlags;
         if (!PermissionUtils.HasPermissionOrOpen(Core, player.SteamID, perm))
         {
-            player.SendMessage(MessageType.Chat, $"{Core.Localizer["AdminSelectBoxFlags", perm]}");
+            player.SendMessage(MessageType.Chat, $"{Core.Translation.GetPlayerLocalizer(player)["AdminSelectBoxFlags", perm]}");
             return;
         }
         // 冷却限制
@@ -175,25 +176,25 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
             double secondsSince = (DateTime.Now - lastTime).TotalSeconds;
             if (secondsSince < _airDropCFG.AdminSelectBoxColdCown)
             {
-                player.SendMessage(MessageType.Chat, $"{Core.Localizer["AdminSelectBoxColdCown", _airDropCFG.AdminSelectBoxColdCown]}");
+                player.SendMessage(MessageType.Chat, $"{Core.Translation.GetPlayerLocalizer(player)["AdminSelectBoxColdCown", _airDropCFG.AdminSelectBoxColdCown]}");
                 return;
             }
         }
         AdminCreateBoxCooldown[player.SteamID] = DateTime.Now;
         if (context.Args.Length < 2)
         {
-            player.SendMessage(MessageType.Chat, $"{Core.Localizer["AdminSelectBoxError"]}"); //用法: !createbox 空投名 次数
+            player.SendMessage(MessageType.Chat, $"{Core.Translation.GetPlayerLocalizer(player)["AdminSelectBoxError"]}"); //用法: !createbox 空投名 次数
             return;
         }
         string boxName = context.Args[0];
         if (!int.TryParse(context.Args[1], out int count) || count <= 0)
         {
-            player.SendMessage(MessageType.Chat, $"{Core.Localizer["AdminSelectBoxError2"]}"); //请输入有效的次数（正整数）
+            player.SendMessage(MessageType.Chat, $"{Core.Translation.GetPlayerLocalizer(player)["AdminSelectBoxError2"]}"); //请输入有效的次数（正整数）
             return;
         }
         if (count > _airDropCFG.AdminSelectBoxCount)
         {
-            player.SendMessage(MessageType.Chat, $"{Core.Localizer["AdminSelectBoxCount", _airDropCFG.AdminSelectBoxCount]}"); //请输入有效的次数（正整数）
+            player.SendMessage(MessageType.Chat, $"{Core.Translation.GetPlayerLocalizer(player)["AdminSelectBoxCount", _airDropCFG.AdminSelectBoxCount]}"); //请输入有效的次数（正整数）
             return;
         }
 
@@ -217,7 +218,7 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
         }
         string BoxNameMessage = $"{boxName}";
         string BoxCountMessage = $"{count}";
-        Core.PlayerManager.SendMessage(MessageType.Chat, $"{Core.Localizer["AdminSelectBoxCreated", playerController.PlayerName, BoxNameMessage, BoxCountMessage]}"); //已创建 {count} 个空投 [{boxName}]。
+        Core.PlayerManager.SendMessage(MessageType.Chat, $"{Core.Translation.GetPlayerLocalizer(player)["AdminSelectBoxCreated", playerController.PlayerName, BoxNameMessage, BoxCountMessage]}"); //已创建 {count} 个空投 [{boxName}]。
 
     }
 
@@ -254,33 +255,39 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
 
     public void CreateDrop()
     {
-        //检查玩家数量
         int playerCount = Core.PlayerManager.GetAllPlayers().Count();
-        if (playerCount <= 0)
-            return;
+        if (playerCount <= 0) return;
 
-        //计算要生成的空投数量
         int count = CalculateDropCount(playerCount);
-        if (count <= 0)
-            return;
+        if (count <= 0) return;
 
-        //生成空投
         for (int i = 0; i < count; i++)
         {
             var spawn = _teleportHelper.GetRandomSpawnPosition(_airDropCFG.AirDropPosMode);
-            if (spawn != null)
+            if (spawn == null) continue;
+
+            SwiftlyS2.Shared.Natives.Vector Pos = new SwiftlyS2.Shared.Natives.Vector(
+                spawn.Value.Position.X,
+                spawn.Value.Position.Y,
+                spawn.Value.Position.Z + 100.0f
+            );
+            _airDropCreator.CreateAirDrop(Pos, spawn.Value.Angle, spawn.Value.Velocity);
+
+            // 给每个玩家发他们语言的公告
+            var allPlayers = Core.PlayerManager.GetAllPlayers();
+            foreach (var player in allPlayers)
             {
-                SwiftlyS2.Shared.Natives.Vector Pos = new SwiftlyS2.Shared.Natives.Vector(
-                    spawn.Value.Position.X,
-                    spawn.Value.Position.Y,
-                    spawn.Value.Position.Z + 100.0f
-                );
-                _airDropCreator.CreateAirDrop(Pos, spawn.Value.Angle, spawn.Value.Velocity);
-                Core.PlayerManager.SendMessage(MessageType.Chat, $"{Core.Localizer["AirDropMessage", spawn.Value.SpawnType]}");
+                if (player == null || !player.IsValid || player.IsFakeClient)
+                    continue;
+
+                var loc = Core.Translation.GetPlayerLocalizer(player);
+                // 使用 spawnTypeKey 作为参数传入
+                player.SendMessage(MessageType.Chat, loc["AirDropMessage", spawn.Value.SpawnTypeKey]);
             }
         }
-
     }
+
+
 
     private int CalculateDropCount(int playerCount)
     {
@@ -540,13 +547,13 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
         if (!canPick)
         {
             PlayBlockSound(player);
-            player.SendMessage(MessageType.Chat, $"{Core.Localizer["BlockTeamMessage"]}");
+            player.SendMessage(MessageType.Chat, $"{Core.Translation.GetPlayerLocalizer(player)["BlockTeamMessage"]}");
             return;
         }
         if (_airDropCFG.PlayerPickEachRound > 0 && _airDropCreator.PlayerPickUpLimit[player.PlayerID] == 0)
         {
             PlayBlockSound(player);
-            player.SendMessage(MessageType.Chat, $"{Core.Localizer["BlockRoundGlobalMessage", _airDropCFG.PlayerPickEachRound]}");
+            player.SendMessage(MessageType.Chat, $"{Core.Translation.GetPlayerLocalizer(player)["BlockRoundGlobalMessage", _airDropCFG.PlayerPickEachRound]}");
             return;
         }
         if (data.RoundPickLimit > 0)
@@ -554,7 +561,7 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
             if (!_airDropCreator.PlayerRoundPickUpLimit.TryGetValue(player.PlayerID, out var roundLimits) || !roundLimits.TryGetValue(data.Code, out var remaining) || remaining <= 0)
             {
                 PlayBlockSound(player);
-                player.SendMessage(MessageType.Chat, $"{Core.Localizer["BlockRoundBoxMessage", data.RoundPickLimit]}");
+                player.SendMessage(MessageType.Chat, $"{Core.Translation.GetPlayerLocalizer(player)["BlockRoundBoxMessage", data.RoundPickLimit]}");
                 return;
             }
         }
@@ -563,7 +570,7 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
             if (!_airDropCreator.PlayerSpawnPickUpLimit.TryGetValue(player.PlayerID, out var spawnLimits) || !spawnLimits.TryGetValue(data.Code, out var remaining) || remaining <= 0)
             {
                 PlayBlockSound(player);
-                player.SendMessage(MessageType.Chat, $"{Core.Localizer["BlockSpawnMessage", data.SpawnPickLimit]}");
+                player.SendMessage(MessageType.Chat, $"{Core.Translation.GetPlayerLocalizer(player)["BlockSpawnMessage", data.SpawnPickLimit]}");
                 return;
             }
         }
@@ -572,7 +579,7 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
         {
             PlayBlockSound(player);
             string FlagsName = $"{data.Flags}";
-            player.SendMessage(MessageType.Chat, $"{Core.Localizer["BlockFlagsMessage", data.Flags]}");
+            player.SendMessage(MessageType.Chat, $"{Core.Translation.GetPlayerLocalizer(player)["BlockFlagsMessage", data.Flags]}");
             return;
         }
 
@@ -617,7 +624,7 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
         if (validItems.Count == 0)
         {
             PlayBlockSound(player);
-            player.SendMessage(MessageType.Chat, $"{Core.Localizer["NoPermissionToItems"]}");
+            player.SendMessage(MessageType.Chat, $"{Core.Translation.GetPlayerLocalizer(player)["NoPermissionToItems"]}");
             return;
         }
 
@@ -635,7 +642,7 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
         player.ExecuteCommand(chosenItem.Command);
         //Core.PlayerManager.SendMessage(MessageType.Chat, $" {chosenItem.Command} 运行完毕");
 
-        Core.PlayerManager.SendMessage(MessageType.Chat, $"{Core.Localizer["PlayerPickUpMessage", client.PlayerName, data.Name, chosenItem.Name]}");
+        Core.PlayerManager.SendMessage(MessageType.Chat, $"{Core.Translation.GetPlayerLocalizer(player)["PlayerPickUpMessage", client.PlayerName, data.Name, chosenItem.Name]}");
 
 
         if (!string.IsNullOrEmpty(chosenItem.PickSound))
