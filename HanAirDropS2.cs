@@ -282,7 +282,7 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
 
                 var loc = Core.Translation.GetPlayerLocalizer(player);
                 // 使用 spawnTypeKey 作为参数传入
-                player.SendMessage(MessageType.Chat, loc["AirDropMessage", spawn.Value.SpawnTypeKey]);
+                player.SendMessage(MessageType.Chat, loc["AirDropMessage", loc[spawn.Value.SpawnTypeKey]]);
             }
         }
     }
@@ -353,9 +353,16 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
     
     private HookResult OnRoundStart(EventRoundStart @event)
     {
-        //_airDropCreator.BoxTriggers.Clear();
-
         _airDropCreator.BoxData.Clear();
+
+        if (_airDropCFG.Openrandomspawn == 0)
+        {
+            Core.Engine.ExecuteCommand("mp_randomspawn 0");
+        }
+        else
+        {
+            Core.Engine.ExecuteCommand("mp_randomspawn 1");
+        }
 
         var Allplayer = Core.PlayerManager.GetAllPlayers();
         foreach (var client in Allplayer)
@@ -387,16 +394,8 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
         if (!_airDropCFG.AirDropEnble || _airDropCFG.AirDropMode == 1)
             return HookResult.Continue;
 
-        int code = 0;
-        if (_airDropCFG.Openrandomspawn == 0)
-        {
-            code = 0;
-        }
-        else
-        {
-            code = 1;
-        }
-        Core.Engine.ExecuteCommand($"mp_randomspawn {code}");
+
+        
 
         MapStartDropTimer?.Cancel();
         MapStartDropTimer = null;

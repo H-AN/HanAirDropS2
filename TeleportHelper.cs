@@ -23,7 +23,6 @@ public class TeleportHelper
 
         List<(SpawnPoint spawn, string typeKey)> spawnPoints = new List<(SpawnPoint, string)>();
 
-        // 仅存 key，不做本地化
         string ctSpawnKey = "CtSpawnPointName";
         string tSpawnKey = "TSpawnPointName";
         string dSpawnKey = "DSpawnPointName";
@@ -85,7 +84,6 @@ public class TeleportHelper
                 break;
 
             case 6:
-                // 这里是个 bug 你之前把 t spawn 标记成 ctspawn，已改正为 tSpawnKey
                 spawnPoints.AddRange(Core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>("info_player_terrorist")
                     .Select(s => (s, tSpawnKey)));
                 if (mainCfg.Openrandomspawn != 0)
