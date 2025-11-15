@@ -153,16 +153,12 @@ public class HanAirDropCreateBox
             }
         });
 
-
-        if (box.OpenGlow)
-        {
-            HanAirDropGlow.TryParseColor(box.GlowColor, out var glowColor, new SwiftlyS2.Shared.Natives.Color(255, 255, 0,  0));
-            var cloneprop = CreateClone(Box!, box.ModelPath, propName, box.GlowColor);
-        }   
+        //HanAirDropGlow.TryParseColor(box.GlowColor, out var glowColor, new SwiftlyS2.Shared.Natives.Color(255, 255, 0, 0));
+        var cloneprop = CreateClone(Box!, box.ModelPath, propName, box.GlowColor, box.OpenGlow);
 
     }
 
-    public CDynamicProp? CreateClone(CPhysicsPropOverride prop, string model, string propName, string glowcolor)
+    public CDynamicProp? CreateClone(CPhysicsPropOverride prop, string model, string propName, string glowcolor, bool OpenGlow)
     {
         if (string.IsNullOrEmpty(model))
         {
@@ -194,10 +190,12 @@ public class HanAirDropCreateBox
 
         clone!.AcceptInput("SetParent", "!activator", prop, clone);
 
-
-        var defaultGlowColor = new SwiftlyS2.Shared.Natives.Color(255, 0, 0, 255);
-        HanAirDropGlow.TryParseColor(glowcolor, out var glowColor, defaultGlowColor);
-        _airDropGlow.SetGlow(clone, glowColor.R, glowColor.G, glowColor.B, glowColor.A);
+        if (OpenGlow)
+        {
+            var defaultGlowColor = new SwiftlyS2.Shared.Natives.Color(255, 0, 0, 255);
+            HanAirDropGlow.TryParseColor(glowcolor, out var glowColor, defaultGlowColor);
+            _airDropGlow.SetGlow(clone, glowColor.R, glowColor.G, glowColor.B, glowColor.A);
+        }
 
         prop.Render.A = 0;
         prop.RenderUpdated();
@@ -301,12 +299,9 @@ public class HanAirDropCreateBox
         });
 
 
-        if (config.OpenGlow)
-        {
-            HanAirDropGlow.TryParseColor(config.GlowColor, out var glowColor, new SwiftlyS2.Shared.Natives.Color(255, 255, 0, 0));
-            var cloneprop = CreateClone(Box!, config.ModelPath, propName, config.GlowColor);
-        }
-        
+        //HanAirDropGlow.TryParseColor(config.GlowColor, out var glowColor, new SwiftlyS2.Shared.Natives.Color(255, 255, 0, 0));
+        var cloneprop = CreateClone(Box!, config.ModelPath, propName, config.GlowColor, config.OpenGlow);
+ 
     }
 
     public void PrintBoxData(AirBoxData airBox, string title = "[ø’Õ∂≈‰÷√–≈œ¢]")
