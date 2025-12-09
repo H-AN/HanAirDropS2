@@ -10,6 +10,9 @@
 <div align="center">创建空投补给，多配置适用于任何模式，通过命令结合空投系统 给予玩家道具状态等任何东西. </div>
 
 <div align="center">
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Z8Z31PY52N)
+  
 https://www.youtube.com/watch?v=Ho0A_rzrsko
 
 https://www.bilibili.com/video/BV1NL1QBPE1e
