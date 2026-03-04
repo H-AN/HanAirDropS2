@@ -70,18 +70,18 @@ public class HanAirDropCommand
     public void AdminSelect(ICommandContext context)
     {
         var player = context.Sender;
-        if (player == null) 
-            return;
-
-        var playerController = player.Controller;
-        if (playerController == null) 
-            return;
-
-        if (!playerController.PawnIsAlive) 
+        if (player == null || !player.IsValid) 
             return;
 
         var pawn = player.PlayerPawn;
-        if (pawn == null) 
+        if (pawn == null || !pawn.IsValid)
+            return;
+
+        var playerController = player.Controller;
+        if (playerController == null || !playerController.IsValid) 
+            return;
+
+        if (!playerController.PawnIsAlive) 
             return;
 
         var DropCFG = _airDropCFG.CurrentValue;
@@ -120,24 +120,8 @@ public class HanAirDropCommand
             return;
         }
 
-        SwiftlyS2.Shared.Natives.Vector spawnPos = _helpers.GetForwardPosition(player, 120f);
-        for (int i = 0; i < count; i++)
-        {
-            //每个空投间隔 80单位
-            SwiftlyS2.Shared.Natives.Vector dropPos = new SwiftlyS2.Shared.Natives.Vector(spawnPos.X + (i * 50), spawnPos.Y, spawnPos.Z);
+        _service.CreateCenteredDropsForPlayer(boxName, player, count, 50f, 120f);
 
-            if (pawn?.AbsRotation == null)
-                return;
-
-            SwiftlyS2.Shared.Natives.QAngle Angle = (SwiftlyS2.Shared.Natives.QAngle)pawn.AbsRotation;
-
-            if (pawn?.AbsVelocity == null)
-                return;
-
-            SwiftlyS2.Shared.Natives.Vector Velocity = (SwiftlyS2.Shared.Natives.Vector)pawn.AbsVelocity;
-
-            _service.CreateAirDropAtPosition(boxName, dropPos, Angle, Velocity);
-        }
         string BoxNameMessage = boxName;
         string BoxCountMessage = $"{count}";
         _core.PlayerManager.SendMessage(MessageType.Chat, $"{_core.Translation.GetPlayerLocalizer(player)["AdminSelectBoxCreated", playerController.PlayerName, BoxNameMessage, BoxCountMessage]}"); //已创建 {count} 个空投 [{boxName}]。

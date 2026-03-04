@@ -113,14 +113,18 @@ public class HanAirDropEvent
         foreach (var client in Allplayer)
         {
             var pawn = client.PlayerPawn;
-            if (pawn == null) return HookResult.Continue;
+            if (pawn == null || !pawn.IsValid) 
+                return HookResult.Continue;
 
             var playerController = client.Controller;
-            if (playerController == null) return HookResult.Continue;
+            if (playerController == null || !playerController.IsValid)
+                return HookResult.Continue;
 
-            if (client.IsFakeClient) return HookResult.Continue;
+            if (client.IsFakeClient) 
+                return HookResult.Continue;
 
-            if (!playerController.PawnIsAlive) return HookResult.Continue;
+            if (!playerController.PawnIsAlive) 
+                return HookResult.Continue;
 
             int slot = client.PlayerID;
             if (DropCFG.PlayerPickEachRound > 0)
@@ -216,7 +220,8 @@ public class HanAirDropEvent
             return;
 
         var pawn = activator.As<CCSPlayerPawn>();
-        if (pawn == null || !pawn.IsValid) return;
+        if (pawn == null || !pawn.IsValid) 
+            return;
 
         var controller = pawn.Controller.Value?.As<CCSPlayerController>();
         if (controller == null || !controller.IsValid || !controller.PawnIsAlive)

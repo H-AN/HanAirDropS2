@@ -36,11 +36,14 @@ public class HanAirDropHelpers
 
     public SwiftlyS2.Shared.Natives.Vector GetForwardPosition(IPlayer player, float distance = 100f)
     {
-        if (player == null)
+        if (player == null || !player.IsValid)
             return new SwiftlyS2.Shared.Natives.Vector(0, 0, 0);
 
         var pawn = player.PlayerPawn;
-        if (pawn?.AbsOrigin == null)
+        if (pawn == null || !pawn.IsValid)
+            return new SwiftlyS2.Shared.Natives.Vector(0, 0, 0);
+
+        if (pawn.AbsOrigin == null)
             return new SwiftlyS2.Shared.Natives.Vector(0, 0, 0);
 
         // 克隆原始位置和朝向，避免引用原始结构造成副作用

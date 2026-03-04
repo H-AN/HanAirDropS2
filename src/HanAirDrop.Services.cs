@@ -1,3 +1,4 @@
+using System.Numerics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SwiftlyS2.Shared;
@@ -226,7 +227,50 @@ public class HanAirDropService
         }
     }
 
-    public void CreateAirDropAtPosition(string boxName, SwiftlyS2.Shared.Natives.Vector positions, SwiftlyS2.Shared.Natives.QAngle QAngles, SwiftlyS2.Shared.Natives.Vector velocitys)
+    public void CreateCenteredDropsForPlayer(string boxName, IPlayer player, int count, float spacing = 50f, float forwardDistance = 120f)
+    {
+        if (player == null || !player.IsValid)
+            return;
+
+        var pawn = player.PlayerPawn;
+        if (pawn == null || !pawn.IsValid)
+            return;
+
+        // 基础前方位置
+        var centerPos = _helpers.GetForwardPosition(player, forwardDistance);
+
+        var angle = new SwiftlyS2.Shared.Natives.QAngle(
+            pawn.EyeAngles.Pitch,
+            pawn.EyeAngles.Yaw,
+            pawn.EyeAngles.Roll
+        );
+
+        float yaw = angle.Yaw * MathF.PI / 180f;
+
+        var forward = new SwiftlyS2.Shared.Natives.Vector(
+            MathF.Cos(yaw),
+            MathF.Sin(yaw),
+            0);
+
+        var right = new SwiftlyS2.Shared.Natives.Vector(
+            -forward.Y,
+            forward.X,
+            0);
+
+        float totalWidth = (count - 1) * spacing;
+        float startOffset = -totalWidth / 2f;
+
+        for (int i = 0; i < count; i++)
+        {
+            float offset = startOffset + i * spacing;
+
+            var dropPos = centerPos + right * offset;
+
+            CreateAirDropAtPosition(boxName, dropPos, angle);
+        }
+    }
+
+    public void CreateAirDropAtPosition(string boxName, SwiftlyS2.Shared.Natives.Vector positions, SwiftlyS2.Shared.Natives.QAngle QAngles)
     {
         var mainCfg = _airDropConfig.CurrentValue;
         var boxCfg = _boxConfig.CurrentValue;
@@ -274,7 +318,7 @@ public class HanAirDropService
         //PrintBoxData(BoxData[Box.Index]); //测试用输出Box数据
        
 
-        Box!.Teleport((SwiftlyS2.Shared.Natives.Vector)positions, (SwiftlyS2.Shared.Natives.QAngle)QAngles, (SwiftlyS2.Shared.Natives.Vector)velocitys);
+        Box!.Teleport((SwiftlyS2.Shared.Natives.Vector)positions, (SwiftlyS2.Shared.Natives.QAngle)QAngles, null);
 
         if (!string.IsNullOrEmpty(config.DropSound))
         {
