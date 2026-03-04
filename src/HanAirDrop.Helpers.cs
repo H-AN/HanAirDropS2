@@ -16,18 +16,14 @@ public class HanAirDropHelpers
     private ISwiftlyCore _core;
     private readonly IOptionsMonitor<HanAirDropConfig> _airDropCFG;
     private readonly IOptionsMonitor<HanAirDropBoxConfig> _airBoxCFG;
-    private readonly IOptionsMonitor<HanAirDropItemConfig> _airItemCFG;
-
     public HanAirDropHelpers(ISwiftlyCore core, ILogger<HanAirDropHelpers> logger,
         IOptionsMonitor<HanAirDropConfig> DropCFG,
-        IOptionsMonitor<HanAirDropBoxConfig> BoxCFG,
-        IOptionsMonitor<HanAirDropItemConfig> ItemCFG)
+        IOptionsMonitor<HanAirDropBoxConfig> BoxCFG)
     {
         _core = core;
         _logger = logger;
         _airDropCFG = DropCFG;
         _airBoxCFG = BoxCFG;
-        _airItemCFG = ItemCFG;
     }
 
     public bool HasPermissionOrOpen(ISwiftlyCore core, ulong steamId, string? permission)

@@ -16,21 +16,18 @@ public class HanAirDropEvent
 
     private readonly IOptionsMonitor<HanAirDropConfig> _airDropCFG;
     private readonly IOptionsMonitor<HanAirDropBoxConfig> _airBoxCFG;
-    private readonly IOptionsMonitor<HanAirDropItemConfig> _airItemCFG;
     private readonly HanAirDropService _service;
     private readonly HanAirDropGlobals _globals;
 
     public HanAirDropEvent(ISwiftlyCore core, ILogger<HanAirDropEvent> logger,
         IOptionsMonitor<HanAirDropConfig> DropCFG,
         IOptionsMonitor<HanAirDropBoxConfig> BoxCFG,
-        IOptionsMonitor<HanAirDropItemConfig> ItemCFG,
         HanAirDropService service, HanAirDropGlobals globals)
     {
         _core = core;
         _logger = logger;
         _airDropCFG = DropCFG;
         _airBoxCFG = BoxCFG;
-        _airItemCFG = ItemCFG;
         _service = service;
         _globals = globals;
     }

@@ -80,7 +80,7 @@ public class HanAirDropService
         var box = _helpers.SelectRandomBoxConfig(mainCfg.AirDropName, _logger);
         if (box == null)
         {
-            _logger.LogWarning("[空投系统] 没有可用的空投配置，请检查 AirDropName 或 Enabled 状态");
+            _logger.LogWarning("[空投系统/AirDrop] 没有可用的空投配置，请检查 AirDropName 或 Enabled 状态/No airdrop configuration is available. Please check the AirDropName or Enabled status.");
             return;
         }
 
@@ -161,7 +161,7 @@ public class HanAirDropService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[空投系统] 延迟自杀任务异常");
+                _logger.LogError(ex, "[空投系统/AirDrop] 延迟删除任务异常/Delayed deletion task exception");
             }
         });
 
@@ -306,7 +306,7 @@ public class HanAirDropService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[空投系统] 延迟自杀任务异常");
+                _logger.LogError(ex, "[空投系统/AirDrop] 延迟自杀任务异常/Delayed deletion task exception");
             }
         });
 
@@ -333,13 +333,13 @@ public class HanAirDropService
 
         if (!_globals.BoxData.TryGetValue(entity.Index, out var data))
         {
-            Console.WriteLine("[H-AN] no data");
+            _logger.LogError("[AirDrop] no data");
             return;
         }
         if (player.IsFakeClient)
         {
             _helpers.PlayBlockSound(player);
-            player.SendMessage(MessageType.Chat, $"Bot 无法拾取!");
+            player.SendMessage(MessageType.Chat, $"[AirDrop] Bot 无法拾取!/Bot Can't PickUp");
             return;
         }
 
