@@ -9,7 +9,7 @@ namespace HanAirDropS2;
 
 [PluginMetadata(
     Id = "HanAirDropS2",
-    Version = "2.2.0",
+    Version = "2.3.0",
     Name = "空投支援 for Sw2/HanAirDropS2",
     Author = "H-AN",
     Description = "CS2空投支援 SW2版本 CS2 AirDrop for SW2."
