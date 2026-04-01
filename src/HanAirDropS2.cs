@@ -9,10 +9,10 @@ namespace HanAirDropS2;
 
 [PluginMetadata(
     Id = "HanAirDropS2",
-    Version = "2.3.0",
-    Name = "©ум╤ж╖т╝ for Sw2/HanAirDropS2",
+    Version = "2.4.0",
+    Name = "Г╘╨Ф┼∙Ф■╞Ф▐╢ for Sw2/HanAirDropS2",
     Author = "H-AN",
-    Description = "CS2©ум╤ж╖т╝ SW2╟Ф╠╬ CS2 AirDrop for SW2."
+    Description = "CS2Г╘╨Ф┼∙Ф■╞Ф▐╢ SW2Г┴┬Ф°╛ CS2 AirDrop for SW2."
     )]
 
 public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
@@ -76,17 +76,17 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
         airDropMonitor.OnChange(newConfig =>
         {
             _airDropCFG = newConfig;
-            Core.Logger.LogInformation("[©ум╤еДжц/ AirCFG] AirDrop еДжцнд╪Чряххжьть╡╒м╛╡╫/Drop CFG Hot Load!║ё");
+            Core.Logger.LogInformation("[Г╘╨Ф┼∙И┘█Г╫╝/ AirCFG] AirDrop И┘█Г╫╝Ф√┤Д╩╤Е╥╡Г┐╜И┤█Х╫╫Е╧╤Е░▄Ф╜╔/Drop CFG Hot Load!Ц─┌");
         });
         airBoxMonitor.OnChange(newConfig =>
         {
             _airBoxCFG = newConfig;
-            Core.Logger.LogInformation("[©ум╤еДжц/ AirCFG] AirDropBox еДжцнд╪Чряххжьть╡╒м╛╡╫/Box CFG Hot Load!║ё");
+            Core.Logger.LogInformation("[Г╘╨Ф┼∙И┘█Г╫╝/ AirCFG] AirDropBox И┘█Г╫╝Ф√┤Д╩╤Е╥╡Г┐╜И┤█Х╫╫Е╧╤Е░▄Ф╜╔/Box CFG Hot Load!Ц─┌");
         });
         airItemMonitor.OnChange(newConfig =>
         {
             _airItemCFG = newConfig;
-            Core.Logger.LogInformation("[©ум╤еДжц/ AirCFG] AirDropItem еДжцнд╪Чряххжьть╡╒м╛╡╫/Item CFG Hot Load!║ё");
+            Core.Logger.LogInformation("[Г╘╨Ф┼∙И┘█Г╫╝/ AirCFG] AirDropItem И┘█Г╫╝Ф√┤Д╩╤Е╥╡Г┐╜И┤█Х╫╫Е╧╤Е░▄Ф╜╔/Item CFG Hot Load!Ц─┌");
         });
 
 

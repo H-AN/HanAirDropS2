@@ -1,3 +1,6 @@
 .vs
 bin
 obj
+codex-bin/
+codex-obj/
+src.sln

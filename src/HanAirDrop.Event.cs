@@ -5,6 +5,7 @@ using SwiftlyS2.Shared;
 using SwiftlyS2.Shared.Events;
 using SwiftlyS2.Shared.GameEventDefinitions;
 using SwiftlyS2.Shared.Misc;
+using SwiftlyS2.Shared.Players;
 using SwiftlyS2.Shared.SchemaDefinitions;
 
 namespace HanAirDropS2;
@@ -94,6 +95,25 @@ public class HanAirDropEvent
 
     }
 
+    private static bool TryGetValidPlayerPawn(IPlayer player, out CCSPlayerPawn? pawn)
+    {
+        pawn = null;
+
+        if (player == null || !player.IsValid)
+            return false;
+
+        try
+        {
+            pawn = player.PlayerPawn;
+        }
+        catch (NullReferenceException)
+        {
+            return false;
+        }
+
+        return pawn != null && pawn.IsValid;
+    }
+
     private HookResult OnRoundStart(EventRoundStart @event)
     {
         var DropCFG = _airDropCFG.CurrentValue;
@@ -112,8 +132,7 @@ public class HanAirDropEvent
         var Allplayer = _core.PlayerManager.GetAllPlayers();
         foreach (var client in Allplayer)
         {
-            var pawn = client.PlayerPawn;
-            if (pawn == null || !pawn.IsValid) 
+            if (!TryGetValidPlayerPawn(client, out _))
                 return HookResult.Continue;
 
             var playerController = client.Controller;

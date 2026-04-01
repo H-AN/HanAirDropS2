@@ -102,7 +102,6 @@ public class HanAirDropCommand
                 return;
             }
         }
-        _globals.AdminCreateBoxCooldown[player.SteamID] = DateTime.Now;
         if (context.Args.Length < 2)
         {
             player.SendMessage(MessageType.Chat, $"{_core.Translation.GetPlayerLocalizer(player)["AdminSelectBoxError"]}"); //用法: !createbox 空投名 次数
@@ -119,6 +118,18 @@ public class HanAirDropCommand
             player.SendMessage(MessageType.Chat, $"{_core.Translation.GetPlayerLocalizer(player)["AdminSelectBoxCount", DropCFG.AdminSelectBoxCount]}"); //请输入有效的次数（正整数）
             return;
         }
+
+        bool boxExists = _airBoxCFG.CurrentValue.BoxList.Any(box =>
+            box.Enabled &&
+            string.Equals(box.Name, boxName, StringComparison.Ordinal));
+
+        if (!boxExists)
+        {
+            player.SendMessage(MessageType.Chat, $"{_core.Translation.GetPlayerLocalizer(player)["AdminSelectBoxError3", boxName]}"); //空投箱不存在或未启用
+            return;
+        }
+
+        _globals.AdminCreateBoxCooldown[player.SteamID] = DateTime.Now;
 
         _service.CreateCenteredDropsForPlayer(boxName, player, count, 50f, 120f);
 

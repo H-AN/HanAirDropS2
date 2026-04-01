@@ -59,7 +59,7 @@ public class HanAirDropService
 
             CreateAirDrop(Pos, spawn.Value.Angle, spawn.Value.Velocity);
 
-            // ¸øÃ¿¸öÍæ¼Ò·¢ËûÃÇÓïÑÔµÄ¹«¸æ
+            // ç»™æ¯ä¸ªç©å®¶å‘ä»–ä»¬è¯­è¨€çš„å…¬å‘Š
             var allPlayers = _core.PlayerManager.GetAllPlayers();
             foreach (var player in allPlayers)
             {
@@ -67,7 +67,7 @@ public class HanAirDropService
                     continue;
 
                 var loc = _core.Translation.GetPlayerLocalizer(player);
-                // Ê¹ÓÃ spawnTypeKey ×÷Îª²ÎÊı´«Èë
+                // ä½¿ç”¨ spawnTypeKey ä½œä¸ºå‚æ•°ä¼ å…¥
                 player.SendMessage(MessageType.Chat, loc["AirDropMessage", loc[spawn.Value.SpawnTypeKey]]);
             }
         }
@@ -81,11 +81,11 @@ public class HanAirDropService
         var box = _helpers.SelectRandomBoxConfig(mainCfg.AirDropName, _logger);
         if (box == null)
         {
-            _logger.LogWarning("[¿ÕÍ¶ÏµÍ³/AirDrop] Ã»ÓĞ¿ÉÓÃµÄ¿ÕÍ¶ÅäÖÃ£¬Çë¼ì²é AirDropName »ò Enabled ×´Ì¬/No airdrop configuration is available. Please check the AirDropName or Enabled status.");
+            _logger.LogWarning("[ç©ºæŠ•ç³»ç»Ÿ/AirDrop] æ²¡æœ‰å¯ç”¨çš„ç©ºæŠ•é…ç½®ï¼Œè¯·æ£€æŸ¥ AirDropName æˆ– Enabled çŠ¶æ€/No airdrop configuration is available. Please check the AirDropName or Enabled status.");
             return;
         }
 
-        //_logger.LogInformation("Éú³É¿ÕÍ¶£º{BoxName} Ä£ĞÍ£º{Model}", box.Name, box.ModelPath);
+        //_logger.LogInformation("ç”Ÿæˆç©ºæŠ•ï¼š{BoxName} æ¨¡å‹ï¼š{Model}", box.Name, box.ModelPath);
 
 
         CPhysicsPropOverride Box = _core.EntitySystem.CreateEntity<CPhysicsPropOverride>();
@@ -104,11 +104,11 @@ public class HanAirDropService
         Box.DispatchSpawn();
 
        
-        //Box.SetScale(1.5f); //Ïä×Ó´óĞ¡ Î´Ê¹ÓÃ
+        //Box.SetScale(1.5f); //ç®±å­å¤§å° æœªä½¿ç”¨
 
         string model = Box?.CBodyComponent?.SceneNode?.GetSkeletonInstance().ModelState.ModelName ?? string.Empty;
 
-        string propName = $"»ª×Ğ¿ÕÍ¶_{Random.Shared.Next(1000000, 9999999)}";  
+        string propName = $"åä»”ç©ºæŠ•_{Random.Shared.Next(1000000, 9999999)}";  
         Box!.Entity!.Name = propName;
 
         var boxRef = _core.EntitySystem.GetRefEHandle(Box);
@@ -128,7 +128,7 @@ public class HanAirDropService
         };
 
 
-        //PrintBoxData(BoxData[Box]); //²âÊÔÓÃÊä³öBoxÊı¾İ
+        //PrintBoxData(BoxData[Box]); //æµ‹è¯•ç”¨è¾“å‡ºBoxæ•°æ®
 
         Box!.Teleport((SwiftlyS2.Shared.Natives.Vector)positions, (SwiftlyS2.Shared.Natives.QAngle)QAngles, (SwiftlyS2.Shared.Natives.Vector)velocitys);
 
@@ -148,21 +148,21 @@ public class HanAirDropService
         {
             try
             {
-                // ÒıÓÃÊ§Ğ§ÔòÌáÇ°ÍË³ö
+                // å¼•ç”¨å¤±æ•ˆåˆ™æå‰é€€å‡º
                 if (!boxRef.IsValid)
                     return;
 
-                // ÖØĞÂÈ¡ÊµÌå¶ÔÏó
+                // é‡æ–°å–å®ä½“å¯¹è±¡
                 var box = boxRef.Value;
                 if (box == null)
                     return;
 
-                // Õı³£Ö´ĞĞ
+                // æ­£å¸¸æ‰§è¡Œ
                 BoxSelfKill(boxRef);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[¿ÕÍ¶ÏµÍ³/AirDrop] ÑÓ³ÙÉ¾³ıÈÎÎñÒì³£/Delayed deletion task exception");
+                _logger.LogError(ex, "[ç©ºæŠ•ç³»ç»Ÿ/AirDrop] å»¶è¿Ÿåˆ é™¤ä»»åŠ¡å¼‚å¸¸/Delayed deletion task exception");
             }
         });
 
@@ -223,7 +223,7 @@ public class HanAirDropService
             _globals.BoxData.Remove(boxRef.Value!.Index!);
             boxRef.Value!.AcceptInput("Kill", 0);
 
-            //Core.PlayerManager.SendMessage(MessageType.Chat, "boxRef ´æÔÚ ÒÑ×Ô¶¯É¾³ı");
+            //Core.PlayerManager.SendMessage(MessageType.Chat, "boxRef å­˜åœ¨ å·²è‡ªåŠ¨åˆ é™¤");
         }
     }
 
@@ -236,7 +236,7 @@ public class HanAirDropService
         if (pawn == null || !pawn.IsValid)
             return;
 
-        // »ù´¡Ç°·½Î»ÖÃ
+        // åŸºç¡€å‰æ–¹ä½ç½®
         var centerPos = _helpers.GetForwardPosition(player, forwardDistance);
 
         var angle = new SwiftlyS2.Shared.Natives.QAngle(
@@ -296,7 +296,7 @@ public class HanAirDropService
 
         string model = Box?.CBodyComponent?.SceneNode?.GetSkeletonInstance().ModelState.ModelName ?? string.Empty;
 
-        string propName = $"»ª×Ğ¿ÕÍ¶_{Random.Shared.Next(1000000, 9999999)}"; 
+        string propName = $"åä»”ç©ºæŠ•_{Random.Shared.Next(1000000, 9999999)}"; 
         Box!.Entity!.Name = propName;
 
         var boxRef = _core.EntitySystem.GetRefEHandle(Box);
@@ -315,7 +315,7 @@ public class HanAirDropService
             OpenGlow = config.OpenGlow
         };
 
-        //PrintBoxData(BoxData[Box.Index]); //²âÊÔÓÃÊä³öBoxÊı¾İ
+        //PrintBoxData(BoxData[Box.Index]); //æµ‹è¯•ç”¨è¾“å‡ºBoxæ•°æ®
        
 
         Box!.Teleport((SwiftlyS2.Shared.Natives.Vector)positions, (SwiftlyS2.Shared.Natives.QAngle)QAngles, null);
@@ -336,21 +336,21 @@ public class HanAirDropService
         {
             try
             {
-                // ÒıÓÃÊ§Ğ§ÔòÌáÇ°ÍË³ö
+                // å¼•ç”¨å¤±æ•ˆåˆ™æå‰é€€å‡º
                 if (!boxRef.IsValid)
                     return;
 
-                // ÖØĞÂÈ¡ÊµÌå¶ÔÏó
+                // é‡æ–°å–å®ä½“å¯¹è±¡
                 var box = boxRef.Value;
                 if (box == null)
                     return;
 
-                // Õı³£Ö´ĞĞ
+                // æ­£å¸¸æ‰§è¡Œ
                 BoxSelfKill(boxRef);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[¿ÕÍ¶ÏµÍ³/AirDrop] ÑÓ³Ù×ÔÉ±ÈÎÎñÒì³£/Delayed deletion task exception");
+                _logger.LogError(ex, "[ç©ºæŠ•ç³»ç»Ÿ/AirDrop] å»¶è¿Ÿè‡ªæ€ä»»åŠ¡å¼‚å¸¸/Delayed deletion task exception");
             }
         });
 
@@ -383,7 +383,7 @@ public class HanAirDropService
         if (player.IsFakeClient)
         {
             _helpers.PlayBlockSound(player);
-            player.SendMessage(MessageType.Chat, $"[AirDrop] Bot ÎŞ·¨Ê°È¡!/Bot Can't PickUp");
+            player.SendMessage(MessageType.Chat, $"[AirDrop] Bot æ— æ³•æ‹¾å–!/Bot Can't PickUp");
             return;
         }
 
@@ -430,7 +430,7 @@ public class HanAirDropService
         var boxRef = _core.EntitySystem.GetRefEHandle(entity);
         if (!boxRef.IsValid) return;
 
-        _globals.BoxData.Remove(boxRef.Value!.Index!); //ÇåÀíÊı¾İ
+        _globals.BoxData.Remove(boxRef.Value!.Index!); //æ¸…ç†æ•°æ®
         if (entity.IsValid)
         {
             entity.AcceptInput("Kill", 0);
@@ -440,17 +440,17 @@ public class HanAirDropService
         {
             _globals.PlayerPickUpLimit[player.PlayerID]--;
         }
-        // ¼õÉÙÏä×Ó»ØºÏÊ°È¡´ÎÊı
+        // å‡å°‘ç®±å­å›åˆæ‹¾å–æ¬¡æ•°
         if (data.RoundPickLimit > 0)
         {
             _globals.PlayerRoundPickUpLimit[player.PlayerID][data.Code]--;
         }
-        // ¼õÉÙÏä×ÓÃ¿ÌõÃüÊ°È¡´ÎÊı
+        // å‡å°‘ç®±å­æ¯æ¡å‘½æ‹¾å–æ¬¡æ•°
         if (data.SpawnPickLimit > 0)
         {
             _globals.PlayerSpawnPickUpLimit[player.PlayerID][data.Code]--;
         }
-        // µÀ¾ß·¢·Å
+        // é“å…·å‘æ”¾
         if (data.Items.Length == 0)
         {
             _helpers.PlayBlockSound(player);
@@ -460,11 +460,11 @@ public class HanAirDropService
 
         var IteamCFG = _airItemConfig.CurrentValue;
         var validItems = IteamCFG.ItemList
-       .Where(item => item.Enabled && data.Items.Contains(item.Name)) // Ö»°´Ãû×ÖÆ¥Åä
+       .Where(item => item.Enabled && data.Items.Contains(item.Name)) // åªæŒ‰åå­—åŒ¹é…
        .Where(item => _helpers.HasPermissionOrOpen(_core, player.SteamID, item.Permissions))
        .ToList();
 
-        // Íæ¼ÒÃ»ÓĞÈÎºÎ¿ÉÓÃÈ¨ÏŞµÄµÀ¾ß£¬¸ø³öÌáÊ¾
+        // ç©å®¶æ²¡æœ‰ä»»ä½•å¯ç”¨æƒé™çš„é“å…·ï¼Œç»™å‡ºæç¤º
 
         if (validItems.Count == 0)
         {
@@ -477,7 +477,7 @@ public class HanAirDropService
         if (chosenItem == null)
         {
             _helpers.PlayBlockSound(player);
-            player.SendMessage(MessageType.Chat, $"´Ë¿ÕÍ¶ÏäÎ´ÅäÖÃµÀ¾ß,»òÕßÎŞµÀ¾ßÆôÓÃ");
+            player.SendMessage(MessageType.Chat, $"æ­¤ç©ºæŠ•ç®±æœªé…ç½®é“å…·,æˆ–è€…æ— é“å…·å¯ç”¨");
             return;
         }
         player.ExecuteCommand(chosenItem.Command);
@@ -486,7 +486,7 @@ public class HanAirDropService
         {
             var sound = new SwiftlyS2.Shared.Sounds.SoundEvent(chosenItem.PickSound, 1.0f, 1.0f);
             sound.SourceEntityIndex = -1;
-            sound.Recipients.AddRecipient(player.PlayerID); // Ö»ÓĞ×Ô¼ºÌıµ½
+            sound.Recipients.AddRecipient(player.PlayerID); // åªæœ‰è‡ªå·±å¬åˆ°
 
             _core.Scheduler.NextTick(() =>
             {
