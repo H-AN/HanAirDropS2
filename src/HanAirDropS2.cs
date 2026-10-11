@@ -9,7 +9,7 @@ namespace HanAirDropS2;
 
 [PluginMetadata(
     Id = "HanAirDropS2",
-    Version = "2.4.0",
+    Version = "2.4.1",
     Name = "空投支援 for Sw2/HanAirDropS2",
     Author = "H-AN",
     Description = "CS2空投支援 SW2版本 CS2 AirDrop for SW2."
@@ -95,6 +95,7 @@ public partial class HanAirDropS2(ISwiftlyCore core) : BasePlugin(core)
     }
     public override void Unload()
     {
+        _Event?.UnhookGameHooks();
         ServiceProvider!.Dispose();
     }
 }

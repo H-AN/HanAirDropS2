@@ -8,7 +8,7 @@
     ".NETCoreApp,Version=v10.0": {
       "HanAirDropS2/1.0.0": {
         "dependencies": {
-          "SwiftlyS2.CS2": "1.2.2"
+          "SwiftlyS2.CS2": "1.4.14"
         },
         "runtime": {
           "HanAirDropS2.dll": {}
@@ -27,6 +27,17 @@
           "lib/net8.0/McMaster.NETCore.Plugins.dll": {
             "assemblyVersion": "2.0.0.0",
             "fileVersion": "2.0.0.0"
+          }
+        }
+      },
+      "Microsoft.Diagnostics.NETCore.Client/0.2.661903": {
+        "dependencies": {
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.0"
+        },
+        "runtime": {
+          "lib/net8.0/Microsoft.Diagnostics.NETCore.Client.dll": {
+            "assemblyVersion": "0.2.13.11903",
+            "fileVersion": "0.2.13.11903"
           }
         }
       },
@@ -390,26 +401,6 @@
           }
         }
       },
-      "Mono.Cecil/0.11.6": {
-        "runtime": {
-          "lib/netstandard2.0/Mono.Cecil.Mdb.dll": {
-            "assemblyVersion": "0.11.6.0",
-            "fileVersion": "0.11.6.0"
-          },
-          "lib/netstandard2.0/Mono.Cecil.Pdb.dll": {
-            "assemblyVersion": "0.11.6.0",
-            "fileVersion": "0.11.6.0"
-          },
-          "lib/netstandard2.0/Mono.Cecil.Rocks.dll": {
-            "assemblyVersion": "0.11.6.0",
-            "fileVersion": "0.11.6.0"
-          },
-          "lib/netstandard2.0/Mono.Cecil.dll": {
-            "assemblyVersion": "0.11.6.0",
-            "fileVersion": "0.11.6.0"
-          }
-        }
-      },
       "MySqlConnector/2.4.0": {
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.0",
@@ -482,10 +473,11 @@
           }
         }
       },
-      "SwiftlyS2.CS2/1.2.2": {
+      "SwiftlyS2.CS2/1.4.14": {
         "dependencies": {
           "Dapper": "2.1.66",
           "McMaster.NETCore.Plugins": "2.0.0",
+          "Microsoft.Diagnostics.NETCore.Client": "0.2.661903",
           "Microsoft.Extensions.Configuration": "10.0.0",
           "Microsoft.Extensions.Configuration.Binder": "10.0.0",
           "Microsoft.Extensions.Configuration.Json": "10.0.0",
@@ -494,7 +486,6 @@
           "Microsoft.Extensions.Logging": "10.0.0",
           "Microsoft.Extensions.Logging.Console": "10.0.0",
           "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.0",
-          "Mono.Cecil": "0.11.6",
           "MySqlConnector": "2.4.0",
           "Npgsql": "9.0.3",
           "Semver": "3.0.0",
@@ -505,8 +496,8 @@
         },
         "runtime": {
           "lib/net10.0/SwiftlyS2.CS2.dll": {
-            "assemblyVersion": "1.2.2.0",
-            "fileVersion": "1.2.2.0"
+            "assemblyVersion": "1.4.14.0",
+            "fileVersion": "1.4.14.0"
           }
         }
       },
@@ -578,6 +569,13 @@
       "sha512": "sha512-pmmrI3qPE53xEJEcg575jQeDNPzMWfNJO8/SASlB9PLPrGVrsyVNFRrvfo+3BzcbQxfUBF1//gTOiJ82dOTlTw==",
       "path": "mcmaster.netcore.plugins/2.0.0",
       "hashPath": "mcmaster.netcore.plugins.2.0.0.nupkg.sha512"
+    },
+    "Microsoft.Diagnostics.NETCore.Client/0.2.661903": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-3ISv5jXar4dHBt/7Rz3YdnR3VpnC94BhSdSvuq8ZuKgCOcVuTdmgRnq0hUzJyL/z8Ge4VekFjhui2aufUXPdvg==",
+      "path": "microsoft.diagnostics.netcore.client/0.2.661903",
+      "hashPath": "microsoft.diagnostics.netcore.client.0.2.661903.nupkg.sha512"
     },
     "Microsoft.Extensions.Configuration/10.0.0": {
       "type": "package",
@@ -768,13 +766,6 @@
       "path": "microsoft.extensions.primitives/10.0.0",
       "hashPath": "microsoft.extensions.primitives.10.0.0.nupkg.sha512"
     },
-    "Mono.Cecil/0.11.6": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-f33RkDtZO8VlGXCtmQIviOtxgnUdym9xx/b1p9h91CRGOsJFxCFOFK1FDbVt1OCf1aWwYejUFa2MOQyFWTFjbA==",
-      "path": "mono.cecil/0.11.6",
-      "hashPath": "mono.cecil.0.11.6.nupkg.sha512"
-    },
     "MySqlConnector/2.4.0": {
       "type": "package",
       "serviceable": true,
@@ -810,12 +801,12 @@
       "path": "stub.system.data.sqlite.core.netstandard/1.0.119",
       "hashPath": "stub.system.data.sqlite.core.netstandard.1.0.119.nupkg.sha512"
     },
-    "SwiftlyS2.CS2/1.2.2": {
+    "SwiftlyS2.CS2/1.4.14": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-W5K1oKK891s3LzZsvrooLn4CN2xyRZoxnoObmpYg49ah+Y9bX9YaD0zgawGaXDQfyS6qBPsm56+dAgWLyxbUzg==",
-      "path": "swiftlys2.cs2/1.2.2",
-      "hashPath": "swiftlys2.cs2.1.2.2.nupkg.sha512"
+      "sha512": "sha512-mVyNEjJa06N4I5FKZgMV2q6YGHyb6ILo1Z/dkZHyrqjd622+PB9aTKDAmXRRL6u3qNCjLDSgNQoyuwHj8VeJ9A==",
+      "path": "swiftlys2.cs2/1.4.14",
+      "hashPath": "swiftlys2.cs2.1.4.14.nupkg.sha512"
     },
     "System.Data.SQLite.Core/1.0.119": {
       "type": "package",

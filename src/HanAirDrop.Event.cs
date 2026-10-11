@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Mono.Cecil.Cil;
 using SwiftlyS2.Shared;
 using SwiftlyS2.Shared.Events;
 using SwiftlyS2.Shared.GameEventDefinitions;
+using SwiftlyS2.Shared.GameHooks;
 using SwiftlyS2.Shared.Misc;
 using SwiftlyS2.Shared.Players;
 using SwiftlyS2.Shared.SchemaDefinitions;
@@ -19,6 +19,7 @@ public class HanAirDropEvent
     private readonly IOptionsMonitor<HanAirDropBoxConfig> _airBoxCFG;
     private readonly HanAirDropService _service;
     private readonly HanAirDropGlobals _globals;
+    private bool _gameHooksRegistered;
 
     public HanAirDropEvent(ISwiftlyCore core, ILogger<HanAirDropEvent> logger,
         IOptionsMonitor<HanAirDropConfig> DropCFG,
@@ -38,10 +39,24 @@ public class HanAirDropEvent
         _core.GameEvent.HookPre<EventRoundStart>(OnRoundStart);
         _core.GameEvent.HookPre<EventPlayerSpawn>(OnPlayerSpawn);
         _core.GameEvent.HookPre<EventPlayerDeath>(OnPlayerDeath);
-        _core.Event.OnEntityStartTouch += Event_OnEntityTouchHook;
-        _core.Event.OnEntityTakeDamage += Event_OnEntityHurt;
+        if (!_gameHooksRegistered)
+        {
+            _core.GameHooks.Entities.StartTouch.Pre += OnEntityStartTouchPre;
+            _core.GameHooks.Entities.TakeDamage.Pre += OnEntityTakeDamagePre;
+            _gameHooksRegistered = true;
+        }
         _core.Event.OnPrecacheResource += Event_OnPrecacheResource;
         _core.Event.OnClientDisconnected += Event_OnClientDisconnected;
+    }
+
+    public void UnhookGameHooks()
+    {
+        if (!_gameHooksRegistered)
+            return;
+
+        _core.GameHooks.Entities.StartTouch.Pre -= OnEntityStartTouchPre;
+        _core.GameHooks.Entities.TakeDamage.Pre -= OnEntityTakeDamagePre;
+        _gameHooksRegistered = false;
     }
 
     private void Event_OnClientDisconnected(IOnClientDisconnectedEvent @event)
@@ -133,17 +148,17 @@ public class HanAirDropEvent
         foreach (var client in Allplayer)
         {
             if (!TryGetValidPlayerPawn(client, out _))
-                return HookResult.Continue;
+                continue;
 
             var playerController = client.Controller;
             if (playerController == null || !playerController.IsValid)
-                return HookResult.Continue;
+                continue;
 
             if (client.IsFakeClient) 
-                return HookResult.Continue;
+                continue;
 
             if (!playerController.PawnIsAlive) 
-                return HookResult.Continue;
+                continue;
 
             int slot = client.PlayerID;
             if (DropCFG.PlayerPickEachRound > 0)
@@ -232,9 +247,9 @@ public class HanAirDropEvent
 
         return HookResult.Continue;
     }
-    private void Event_OnEntityTouchHook(IOnEntityStartTouchEvent @event) //IOnEntityTouchHookEvent
+    private void OnEntityStartTouchPre(ref StartTouchEntityPreContext ctx)
     {
-        var activator = @event.Entity;
+        var activator = ctx.Params.Entity;
         if (activator == null || activator.DesignerName != "player")
             return;
 
@@ -250,7 +265,7 @@ public class HanAirDropEvent
         if (player == null || !player.IsValid || player.IsFakeClient)
             return;
 
-        var boxEntity = @event.OtherEntity;
+        var boxEntity = ctx.Params.OtherEntity;
         if (boxEntity == null || !boxEntity.IsValid)
             return;
 
@@ -264,16 +279,16 @@ public class HanAirDropEvent
 
     }
 
-    private void Event_OnEntityHurt(IOnEntityTakeDamageEvent @event)
+    private void OnEntityTakeDamagePre(ref TakeDamageEntityPreContext ctx)
     {
-        var victim = @event.Entity;
-        var attacker = @event.Info.Attacker.Value;
+        var attacker = ctx.Params.Info.Attacker.Value;
         if (attacker == null || !attacker.IsValid)
             return;
 
         if (attacker.Entity!.Name.StartsWith("华仔空投_"))
         {
-            @event.Info.Damage = 0;
+            // 直接写回原生伤害信息，保持原先归零后继续原调用的行为。
+            ctx.Params.Info.Damage = 0;
         }
 
     }
